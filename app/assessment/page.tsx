@@ -23,6 +23,7 @@ export default function AssessmentPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [summary, setSummary] = useState<Record<string, unknown> | null>(null);
+  const [startedAt, setStartedAt] = useState<number | null>(null);
 
   useEffect(() => {
     const uid = localStorage.getItem("learnova_user_id");
@@ -40,6 +41,9 @@ export default function AssessmentPage() {
     setDone(false);
     setQuestion(null);
     try {
+      const now = Date.now();
+      setStartedAt(now);
+      localStorage.setItem("learnova_assessment_started_at", String(now));
       const r = await api.assessmentStart(userId);
       if (r.session_id) setSessionId(r.session_id);
       if (r.done) {
@@ -92,6 +96,12 @@ export default function AssessmentPage() {
       setDone(true);
       setQuestion(null);
       setFeedback("Assessment finalized. Generate your roadmap next.");
+      const startTs =
+        (startedAt ?? Number(localStorage.getItem("learnova_assessment_started_at") || "0")) || 0;
+      if (startTs) {
+        const seconds = Math.max(1, Math.round((Date.now() - startTs) / 1000));
+        localStorage.setItem("learnova_last_assessment_seconds", String(seconds));
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Finalize failed");
     } finally {
@@ -173,6 +183,9 @@ export default function AssessmentPage() {
             </pre>
             <Link className="btn" href="/roadmap">
               Generate / view roadmap
+            </Link>
+            <Link className="btn btn-ghost" href="/results">
+              Open results dashboard
             </Link>
           </div>
         )}

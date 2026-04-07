@@ -43,6 +43,8 @@ export const api = {
     }),
   assessmentFinalize: (session_id: string) =>
     fetchApi("/assessment/finalize", { method: "POST", body: JSON.stringify({ session_id }) }),
+  latestResult: (userId: string) =>
+    fetchApi(`/assessment/latest-result/${encodeURIComponent(userId)}`),
   generateRoadmap: (userId: string) =>
     fetchApi(`/roadmap/generate/${encodeURIComponent(userId)}`, { method: "POST" }),
   getRoadmap: (userId: string) => fetchApi(`/roadmap/${encodeURIComponent(userId)}`),
@@ -53,4 +55,19 @@ export const api = {
     completed: boolean;
     performance_score?: number | null;
   }) => fetchApi("/progress/update", { method: "POST", body: JSON.stringify(data) }),
+
+  generateResources: (topic_name: string) =>
+    fetchApi("/generate-resources", { method: "POST", body: JSON.stringify({ topic_name }) }),
+  generatePracticeLinks: (topic_name: string) =>
+    fetchApi("/generate-practice-links", { method: "POST", body: JSON.stringify({ topic_name }) }),
+  saveNotes: (data: { userId: string; topicId: string; notes: string }) =>
+    fetchApi("/save-notes", { method: "POST", body: JSON.stringify(data) }),
+  getNotes: (userId: string, topicId: string) =>
+    fetchApi(`/save-notes?userId=${encodeURIComponent(userId)}&topicId=${encodeURIComponent(topicId)}`),
+  getSkillMapData: (userId: string) =>
+    fetchApi("/get-skill-map-data", { method: "POST", body: JSON.stringify({ userId }) }),
+  updateGamification: (data: { userId: string; score: number; efficiency: number }) =>
+    fetchApi("/update-gamification", { method: "POST", body: JSON.stringify(data) }),
+  getGamification: (userId: string) =>
+    fetchApi(`/update-gamification?userId=${encodeURIComponent(userId)}`),
 };

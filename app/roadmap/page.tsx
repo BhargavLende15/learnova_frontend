@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
+import { PracticeSessionPanel } from "@/components/PracticeSessionPanel";
 
 type Phase = {
   name: string;
@@ -19,7 +20,6 @@ export default function RoadmapPage() {
   const [roadmap, setRoadmap] = useState<{ career_goal?: string; phases?: Phase[]; progress?: { completed_ids?: string[]; notes?: string[] } } | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [perfInput, setPerfInput] = useState<Record<string, string>>({});
 
   const load = useCallback(async () => {
     if (!userId) return;
@@ -65,8 +65,6 @@ export default function RoadmapPage() {
 
   async function completeItem(itemId: string, type: "topic" | "project") {
     if (!userId) return;
-    const raw = perfInput[itemId];
-    const performance_score = raw === "" || raw === undefined ? null : Number(raw);
     setLoading(true);
     setError("");
     try {
@@ -75,7 +73,7 @@ export default function RoadmapPage() {
         item_id: itemId,
         item_type: type,
         completed: true,
-        performance_score: Number.isFinite(performance_score as number) ? (performance_score as number) : null,
+        performance_score: null,
       });
       setRoadmap(r.roadmap);
     } catch (e) {
@@ -85,7 +83,31 @@ export default function RoadmapPage() {
     }
   }
 
-  const completed = new Set(roadmap?.progress?.completed_ids || []);
+  const completed = useMemo(() => new Set(roadmap?.progress?.completed_ids || []), [roadmap]);
+  const unlocked = useMemo(() => {
+    const p: any = (roadmap as any)?.progress || {};
+    const ids: string[] = p.unlocked_topic_ids || [];
+    if (ids.length) return new Set(ids);
+    // Fallback client-side unlock: first incomplete topic is unlocked.
+    const ordered: string[] = [];
+    for (const ph of roadmap?.phases || []) for (const t of ph.topics || []) ordered.push(t.id);
+    const u = new Set<string>(completed);
+    for (const tid of ordered) {
+      if (!completed.has(tid)) {
+        u.add(tid);
+        break;
+      }
+    }
+    return u;
+  }, [roadmap, completed]);
+
+  const allTopics = useMemo(() => {
+    const out: { id: string; title: string; suggested_skip?: boolean }[] = [];
+    for (const ph of roadmap?.phases || []) {
+      for (const t of ph.topics || []) out.push({ id: t.id, title: t.title, suggested_skip: t.suggested_skip });
+    }
+    return out;
+  }, [roadmap]);
 
   return (
     <div className="container stack">
@@ -97,6 +119,9 @@ export default function RoadmapPage() {
           </Link>
           <Link href="/assessment" className="btn btn-ghost">
             Assessment
+          </Link>
+          <Link href="/skill-map" className="btn btn-ghost">
+            Skill map
           </Link>
         </div>
       </header>
@@ -146,73 +171,13 @@ export default function RoadmapPage() {
             </div>
           </div>
 
-          {(roadmap.phases || []).map((ph) => (
-            <div key={ph.name} className="card phase stack">
-              <div>
-                <h2 style={{ margin: 0 }}>{ph.name}</h2>
-                <p style={{ color: "var(--muted)", margin: "0.25rem 0 0", fontSize: "0.9rem" }}>
-                  {ph.description}
-                </p>
-              </div>
-              <div>
-                <h3 style={{ fontSize: "0.95rem", color: "var(--muted)" }}>Topics</h3>
-                {ph.topics.map((t) => (
-                  <div key={t.id} className="topic-line">
-                    <div>
-                      <div>{t.title}</div>
-                      {t.suggested_skip && (
-                        <span style={{ color: "var(--warn)", fontSize: "0.8rem" }}>Optional skip</span>
-                      )}
-                    </div>
-                    <div className="row">
-                      <input
-                        className="input"
-                        style={{ width: 72 }}
-                        placeholder="%"
-                        value={perfInput[t.id] ?? ""}
-                        onChange={(e) => setPerfInput((p) => ({ ...p, [t.id]: e.target.value }))}
-                      />
-                      <button
-                        className="btn"
-                        type="button"
-                        disabled={loading || completed.has(t.id)}
-                        onClick={() => completeItem(t.id, "topic")}
-                      >
-                        {completed.has(t.id) ? "Done" : "Complete"}
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              {(ph.mini_projects?.length ?? 0) > 0 && (
-                <div>
-                  <h3 style={{ fontSize: "0.95rem", color: "var(--muted)" }}>Mini-projects</h3>
-                  {ph.mini_projects!.map((p) => (
-                    <div key={p.id} className="topic-line">
-                      <span>{p.title}</span>
-                      <div className="row">
-                        <input
-                          className="input"
-                          style={{ width: 72 }}
-                          placeholder="%"
-                          value={perfInput[p.id] ?? ""}
-                          onChange={(e) => setPerfInput((x) => ({ ...x, [p.id]: e.target.value }))}
-                        />
-                        <button
-                          className="btn"
-                          type="button"
-                          disabled={loading || completed.has(p.id)}
-                          onClick={() => completeItem(p.id, "project")}
-                        >
-                          {completed.has(p.id) ? "Done" : "Complete"}
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
+          <PracticeSessionPanel
+            userId={userId}
+            topics={allTopics}
+            completedIds={completed}
+            unlockedTopicIds={unlocked}
+            onMarkDone={async (topicId) => completeItem(topicId, "topic")}
+          />
         </div>
       )}
     </div>
