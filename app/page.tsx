@@ -19,16 +19,27 @@ export default function HomePage() {
     setError("");
     setLoading(true);
     try {
+      let uid = "";
       if (mode === "register") {
         const r = await api.register({ name, email, password });
         localStorage.setItem("learnova_user_id", r.user_id);
         localStorage.setItem("learnova_token", r.token);
         localStorage.setItem("learnova_name", r.name);
+        uid = r.user_id;
       } else {
         const r = await api.login(email, password);
         localStorage.setItem("learnova_user_id", r.user_id);
         localStorage.setItem("learnova_token", r.token);
         localStorage.setItem("learnova_name", r.name);
+        uid = r.user_id;
+      }
+      if (uid) {
+        try {
+          await api.dailyLogin(uid);
+          window.dispatchEvent(new Event("learnova:profile-updated"));
+        } catch {
+          /* ignore */
+        }
       }
       router.push("/dashboard");
     } catch (err) {

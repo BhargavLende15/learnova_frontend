@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, ExternalLink, Lock } from "lucide-react";
+import { CheckCircle2, ExternalLink, Lock, PlayCircle } from "lucide-react";
 
 import { api } from "@/lib/api";
 
@@ -12,8 +12,6 @@ export type TopicRow = {
   suggested_skip?: boolean;
 };
 
-type LinkItem = { title: string; url: string };
-
 type Props = {
   userId: string;
   topics: TopicRow[];
@@ -22,24 +20,12 @@ type Props = {
   onMarkDone: (topicId: string) => Promise<void>;
 };
 
-function dedupeLinks(items: LinkItem[]) {
-  const seen = new Set<string>();
-  return items.filter((x) => {
-    const k = x.url;
-    if (!k || seen.has(k)) return false;
-    seen.add(k);
-    return true;
-  });
-}
-
 export function PracticeSessionPanel({ userId, topics, completedIds, unlockedTopicIds, onMarkDone }: Props) {
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState<Record<string, boolean>>({});
-  const [links, setLinks] = useState<
-    Record<string, { reading: LinkItem[]; videos: LinkItem[]; practice: LinkItem[] }>
-  >({});
-  const [loadingLinks, setLoadingLinks] = useState<Record<string, boolean>>({});
-  const loadedOnce = useRef<Set<string>>(new Set());
+  const [resources, setResources] = useState<Record<string, { youtubeLink: string; gfgLink: string }>>({});
+  const [loadingRes, setLoadingRes] = useState<Record<string, boolean>>({});
+  const [resError, setResError] = useState<Record<string, string>>({});
 
   const visibleTopics = useMemo(() => topics.filter((t) => t?.id && t?.title), [topics]);
 
@@ -61,22 +47,17 @@ export function PracticeSessionPanel({ userId, topics, completedIds, unlockedTop
     })();
   }, [userId, visibleTopics]);
 
-  async function ensureLinks(topicTitle: string) {
-    if (loadedOnce.current.has(topicTitle)) return;
-    loadedOnce.current.add(topicTitle);
-    setLoadingLinks((p) => ({ ...p, [topicTitle]: true }));
+  async function ensureResources(topicTitle: string) {
+    if (resources[topicTitle]) return;
+    setLoadingRes((p) => ({ ...p, [topicTitle]: true }));
+    setResError((p) => ({ ...p, [topicTitle]: "" }));
     try {
-      const [r1, r2] = await Promise.all([api.generateResources(topicTitle), api.generatePracticeLinks(topicTitle)]);
-      setLinks((p) => ({
-        ...p,
-        [topicTitle]: {
-          reading: dedupeLinks((r1.reading || []).map((x: any) => ({ title: x.title, url: x.url }))),
-          videos: dedupeLinks((r1.videos || []).map((x: any) => ({ title: x.title, url: x.url }))),
-          practice: dedupeLinks((r2.practice || []).map((x: any) => ({ title: x.title, url: x.url }))),
-        },
-      }));
+      const r = await api.getDirectResources(topicTitle);
+      setResources((p) => ({ ...p, [topicTitle]: { youtubeLink: r.youtubeLink, gfgLink: r.gfgLink } }));
+    } catch (e) {
+      setResError((p) => ({ ...p, [topicTitle]: e instanceof Error ? e.message : "Failed to fetch resources" }));
     } finally {
-      setLoadingLinks((p) => ({ ...p, [topicTitle]: false }));
+      setLoadingRes((p) => ({ ...p, [topicTitle]: false }));
     }
   }
 
@@ -116,8 +97,9 @@ export function PracticeSessionPanel({ userId, topics, completedIds, unlockedTop
             const locked = !isUnlocked;
 
             const titleKey = t.title;
-            const topicLinks = links[titleKey];
-            const isLoading = !!loadingLinks[titleKey];
+            const topicRes = resources[titleKey];
+            const isLoading = !!loadingRes[titleKey];
+            const errMsg = resError[titleKey];
 
             return (
               <motion.div
@@ -126,9 +108,6 @@ export function PracticeSessionPanel({ userId, topics, completedIds, unlockedTop
                 initial={false}
                 animate={{ opacity: locked ? 0.6 : 1 }}
                 transition={{ duration: 0.25 }}
-                onViewportEnter={() => {
-                  if (!locked) ensureLinks(titleKey);
-                }}
               >
                 <div className="practiceCell">
                   <div className="row" style={{ gap: "0.5rem", flexWrap: "nowrap" }}>
@@ -150,33 +129,30 @@ export function PracticeSessionPanel({ userId, topics, completedIds, unlockedTop
                       type="button"
                       className="linkPill"
                       disabled={locked || isLoading}
-                      onClick={() => ensureLinks(titleKey)}
+                      onClick={() => ensureResources(titleKey)}
                     >
                       {isLoading ? "Loading…" : "Load links"}
                     </button>
-                    <div className="stack" style={{ gap: "0.25rem" }}>
-                      {(topicLinks?.reading || []).slice(0, 2).map((l) => (
-                        <a key={l.url} href={l.url} target="_blank" rel="noreferrer" className="miniLink">
-                          {l.title} <ExternalLink size={14} />
-                        </a>
-                      ))}
-                      {(topicLinks?.videos || []).slice(0, 2).map((l) => (
-                        <a key={l.url} href={l.url} target="_blank" rel="noreferrer" className="miniLink">
-                          {l.title} <ExternalLink size={14} />
-                        </a>
-                      ))}
-                    </div>
+                    {errMsg && <span style={{ color: "var(--danger)", fontSize: "0.85rem" }}>{errMsg}</span>}
+                    {topicRes?.youtubeLink ? (
+                      <a href={topicRes.youtubeLink} target="_blank" rel="noreferrer" className="btn btn-ghost">
+                        <PlayCircle size={18} /> Watch Video <ExternalLink size={16} />
+                      </a>
+                    ) : (
+                      <span style={{ color: "var(--muted)" }}>Click “Load links” to fetch.</span>
+                    )}
                   </div>
                 </div>
 
                 <div className="practiceCell">
                   <div className="stack" style={{ gap: "0.35rem" }}>
-                    {(topicLinks?.practice || []).slice(0, 4).map((l) => (
-                      <a key={l.url} href={l.url} target="_blank" rel="noreferrer" className="miniLink">
-                        {l.title} <ExternalLink size={14} />
+                    {topicRes?.gfgLink ? (
+                      <a href={topicRes.gfgLink} target="_blank" rel="noreferrer" className="btn btn-ghost">
+                        💻 Practice on GFG <ExternalLink size={16} />
                       </a>
-                    ))}
-                    {!topicLinks?.practice?.length && <span style={{ color: "var(--muted)" }}>—</span>}
+                    ) : (
+                      <span style={{ color: "var(--muted)" }}>Click “Load links” to fetch.</span>
+                    )}
                   </div>
                 </div>
 

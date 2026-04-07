@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { PracticeSessionPanel } from "@/components/PracticeSessionPanel";
+import toast from "react-hot-toast";
 
 type Phase = {
   name: string;
@@ -68,14 +69,21 @@ export default function RoadmapPage() {
     setLoading(true);
     setError("");
     try {
-      const r = await api.progressUpdate({
-        user_id: userId,
-        item_id: itemId,
-        item_type: type,
-        completed: true,
-        performance_score: null,
-      });
-      setRoadmap(r.roadmap);
+      if (type === "topic") {
+        const r = await api.completeTopic(userId, itemId);
+        if (r.earned) toast.success(`+${r.earned} points earned!`);
+        if (r.roadmap) setRoadmap(r.roadmap);
+        window.dispatchEvent(new Event("learnova:profile-updated"));
+      } else {
+        const r = await api.progressUpdate({
+          user_id: userId,
+          item_id: itemId,
+          item_type: type,
+          completed: true,
+          performance_score: null,
+        });
+        setRoadmap(r.roadmap);
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Update failed");
     } finally {

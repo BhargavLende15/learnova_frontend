@@ -1,73 +1,66 @@
-const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+import { http } from "@/services/http";
 
-async function fetchApi(path: string, opts: RequestInit = {}) {
-  const url = `${API}${path}`;
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    ...(opts.headers as Record<string, string>),
-  };
-  const res = await fetch(url, { ...opts, headers });
-  if (!res.ok) {
-    let detail = res.statusText;
-    try {
-      const err = await res.json();
-      detail = typeof err.detail === "string" ? err.detail : JSON.stringify(err.detail);
-    } catch {
-      /* ignore */
-    }
-    throw new Error(detail);
+async function unwrap<T>(p: Promise<{ data: T }>): Promise<T> {
+  try {
+    const r = await p;
+    return r.data;
+  } catch (e: any) {
+    const detail =
+      e?.response?.data?.detail ||
+      e?.response?.data?.message ||
+      e?.message ||
+      "Request failed";
+    throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
   }
-  return res.json();
 }
+
+type AnyApi = any;
 
 export const api = {
   register: (data: { name: string; email: string; password: string }) =>
-    fetchApi("/auth/register", { method: "POST", body: JSON.stringify(data) }),
+    unwrap<AnyApi>(http.post("/auth/register", data)),
   login: (email: string, password: string) =>
-    fetchApi("/auth/login", { method: "POST", body: JSON.stringify({ email, password }) }),
-  goals: () => fetchApi("/catalog/goals"),
+    unwrap<AnyApi>(http.post("/auth/login", { email, password })),
+  goals: () => unwrap<AnyApi>(http.get("/catalog/goals")),
   skills: (goal: string) =>
-    fetchApi(`/catalog/skills/${encodeURIComponent(goal)}`),
+    unwrap<AnyApi>(http.get(`/catalog/skills/${encodeURIComponent(goal)}`)),
   saveGoalSkills: (data: { user_id: string; career_goal: string; selected_skills: string[] }) =>
-    fetchApi("/user/goal-skills", { method: "POST", body: JSON.stringify(data) }),
-  getGoalSkills: (userId: string) => fetchApi(`/user/goal-skills/${encodeURIComponent(userId)}`),
+    unwrap<AnyApi>(http.post("/user/goal-skills", data)),
+  getGoalSkills: (userId: string) => unwrap<AnyApi>(http.get(`/user/goal-skills/${encodeURIComponent(userId)}`)),
   assessmentStart: (user_id: string, skills?: string[]) =>
-    fetchApi("/assessment/start", {
-      method: "POST",
-      body: JSON.stringify({ user_id, skills: skills ?? null }),
-    }),
+    unwrap<AnyApi>(http.post("/assessment/start", { user_id, skills: skills ?? null })),
   assessmentAnswer: (session_id: string, question_id: string, selected_option: string) =>
-    fetchApi("/assessment/answer", {
-      method: "POST",
-      body: JSON.stringify({ session_id, question_id, selected_option }),
-    }),
+    unwrap<AnyApi>(http.post("/assessment/answer", { session_id, question_id, selected_option })),
   assessmentFinalize: (session_id: string) =>
-    fetchApi("/assessment/finalize", { method: "POST", body: JSON.stringify({ session_id }) }),
+    unwrap<AnyApi>(http.post("/assessment/finalize", { session_id })),
   latestResult: (userId: string) =>
-    fetchApi(`/assessment/latest-result/${encodeURIComponent(userId)}`),
+    unwrap<AnyApi>(http.get(`/assessment/latest-result/${encodeURIComponent(userId)}`)),
   generateRoadmap: (userId: string) =>
-    fetchApi(`/roadmap/generate/${encodeURIComponent(userId)}`, { method: "POST" }),
-  getRoadmap: (userId: string) => fetchApi(`/roadmap/${encodeURIComponent(userId)}`),
+    unwrap<AnyApi>(http.post(`/roadmap/generate/${encodeURIComponent(userId)}`)),
+  getRoadmap: (userId: string) => unwrap<AnyApi>(http.get(`/roadmap/${encodeURIComponent(userId)}`)),
   progressUpdate: (data: {
     user_id: string;
     item_id: string;
     item_type: "topic" | "project";
     completed: boolean;
     performance_score?: number | null;
-  }) => fetchApi("/progress/update", { method: "POST", body: JSON.stringify(data) }),
+  }) => unwrap<AnyApi>(http.post("/progress/update", data)),
 
-  generateResources: (topic_name: string) =>
-    fetchApi("/generate-resources", { method: "POST", body: JSON.stringify({ topic_name }) }),
-  generatePracticeLinks: (topic_name: string) =>
-    fetchApi("/generate-practice-links", { method: "POST", body: JSON.stringify({ topic_name }) }),
+  getDirectResources: (topic: string) =>
+    unwrap<AnyApi>(http.get(`/api/resources?topic=${encodeURIComponent(topic)}`)),
+
   saveNotes: (data: { userId: string; topicId: string; notes: string }) =>
-    fetchApi("/save-notes", { method: "POST", body: JSON.stringify(data) }),
+    unwrap<AnyApi>(http.post("/save-notes", data)),
   getNotes: (userId: string, topicId: string) =>
-    fetchApi(`/save-notes?userId=${encodeURIComponent(userId)}&topicId=${encodeURIComponent(topicId)}`),
+    unwrap<AnyApi>(http.get(`/save-notes?userId=${encodeURIComponent(userId)}&topicId=${encodeURIComponent(topicId)}`)),
   getSkillMapData: (userId: string) =>
-    fetchApi("/get-skill-map-data", { method: "POST", body: JSON.stringify({ userId }) }),
+    unwrap<AnyApi>(http.post("/get-skill-map-data", { userId })),
   updateGamification: (data: { userId: string; score: number; efficiency: number }) =>
-    fetchApi("/update-gamification", { method: "POST", body: JSON.stringify(data) }),
+    unwrap<AnyApi>(http.post("/update-gamification", data)),
   getGamification: (userId: string) =>
-    fetchApi(`/update-gamification?userId=${encodeURIComponent(userId)}`),
+    unwrap<AnyApi>(http.get(`/update-gamification?userId=${encodeURIComponent(userId)}`)),
+
+  dailyLogin: (userId: string) => unwrap<AnyApi>(http.post("/api/daily-login", { userId })),
+  completeTopic: (userId: string, topicId: string) => unwrap<AnyApi>(http.post("/api/complete-topic", { userId, topicId })),
+  profile: (userId: string) => unwrap<AnyApi>(http.get(`/api/profile/${encodeURIComponent(userId)}`)),
 };
