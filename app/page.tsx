@@ -22,16 +22,18 @@ export default function HomePage() {
       let uid = "";
       if (mode === "register") {
         const r = await api.register({ name, email, password });
-        localStorage.setItem("learnova_user_id", r.user_id);
+        localStorage.setItem("token", r.token);
         localStorage.setItem("learnova_token", r.token);
-        localStorage.setItem("learnova_name", r.name);
-        uid = r.user_id;
+        localStorage.setItem("learnova_user_id", r.user.id);
+        localStorage.setItem("learnova_name", r.user.name);
+        uid = r.user.id;
       } else {
         const r = await api.login(email, password);
-        localStorage.setItem("learnova_user_id", r.user_id);
+        localStorage.setItem("token", r.token);
         localStorage.setItem("learnova_token", r.token);
-        localStorage.setItem("learnova_name", r.name);
-        uid = r.user_id;
+        localStorage.setItem("learnova_user_id", r.user.id);
+        localStorage.setItem("learnova_name", r.user.name);
+        uid = r.user.id;
       }
       if (uid) {
         try {

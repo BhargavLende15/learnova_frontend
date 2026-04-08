@@ -18,9 +18,10 @@ type AnyApi = any;
 
 export const api = {
   register: (data: { name: string; email: string; password: string }) =>
-    unwrap<AnyApi>(http.post("/auth/register", data)),
+    unwrap<AnyApi>(http.post("/api/auth/register", data)),
   login: (email: string, password: string) =>
-    unwrap<AnyApi>(http.post("/auth/login", { email, password })),
+    unwrap<AnyApi>(http.post("/api/auth/login", { email, password })),
+  me: () => unwrap<AnyApi>(http.get("/api/auth/me")),
   goals: () => unwrap<AnyApi>(http.get("/catalog/goals")),
   skills: (goal: string) =>
     unwrap<AnyApi>(http.get(`/catalog/skills/${encodeURIComponent(goal)}`)),
