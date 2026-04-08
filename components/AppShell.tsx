@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Flame, User } from "lucide-react";
+import { Flame, LogOut, User } from "lucide-react";
 import { Toaster } from "react-hot-toast";
 
 import { api } from "@/lib/api";
@@ -23,16 +23,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const uid = typeof window !== "undefined" ? localStorage.getItem("learnova_user_id") : null;
+    const token = typeof window !== "undefined" ? (localStorage.getItem("token") || localStorage.getItem("learnova_token")) : null;
     if (!uid) {
       setProfile(null);
       return;
     }
     (async () => {
       try {
+        if (token) {
+          await api.me();
+        }
         const p = await api.profile(uid);
         setProfile({ userId: uid, name: p.name, email: p.email, points: p.points ?? 0, streak: p.streak ?? 0 });
       } catch {
         setProfile(null);
+        if (pathname !== "/") {
+          localStorage.removeItem("token");
+          localStorage.removeItem("learnova_token");
+          localStorage.removeItem("learnova_user_id");
+          router.replace("/");
+        }
       }
     })();
   }, [pathname]);
@@ -48,6 +58,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, []);
 
   const showNav = pathname !== "/";
+
+  function logout() {
+    localStorage.removeItem("token");
+    localStorage.removeItem("learnova_token");
+    localStorage.removeItem("learnova_user_id");
+    localStorage.removeItem("learnova_name");
+    setProfile(null);
+    router.push("/");
+  }
 
   return (
     <>
@@ -88,6 +107,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <Flame size={16} /> {profile?.streak ?? 0}
               </span>
               <span className="pill">{profile ? `${profile.points} pts` : "— pts"}</span>
+              <button type="button" className="navLink" onClick={logout}>
+                <LogOut size={16} /> Logout
+              </button>
             </div>
           </div>
         </div>
