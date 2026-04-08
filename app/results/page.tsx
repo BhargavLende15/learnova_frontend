@@ -5,8 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Award, Flame, Target, Timer, TrendingUp } from "lucide-react";
-import { RadialBar, RadialBarChart, ResponsiveContainer } from "recharts";
-
 import { api } from "@/lib/api";
 
 type Gamification = {
@@ -40,32 +38,46 @@ function kpi(label: string, value: string, icon: React.ReactNode) {
 }
 
 function RadialStat({ label, value }: { label: string; value: number }) {
-  const data = [{ name: label, value: clamp(value, 0, 100), fill: "url(#grad)" }];
+  const pct = clamp(Math.round(value), 0, 100);
+  const size = 140;
+  const strokeWidth = 13;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const dash = (pct / 100) * circumference;
+  const gap = circumference - dash;
+
+  // hue: 0=red → 60=yellow → 120=green, proportional to pct
+  const hue = Math.round(pct * 1.2);
+  const arcColor = `hsl(${hue}, 80%, 55%)`;
+
   return (
-    <div className="card" style={{ padding: "1rem 1.1rem" }}>
-      <div style={{ height: 160 }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <RadialBarChart
-            innerRadius="70%"
-            outerRadius="100%"
-            data={data}
-            startAngle={90}
-            endAngle={-270}
-          >
-            <defs>
-              <linearGradient id="grad" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stopColor="var(--accent)" />
-                <stop offset="100%" stopColor="var(--accent-2)" />
-              </linearGradient>
-            </defs>
-            <RadialBar background dataKey="value" cornerRadius={12} />
-          </RadialBarChart>
-        </ResponsiveContainer>
+    <div className="card" style={{ padding: "1.25rem 1.1rem", display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+      <div style={{ position: "relative", width: size, height: size }}>
+        <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
+          {/* background track */}
+          <circle
+            cx={size / 2} cy={size / 2} r={radius}
+            fill="none"
+            stroke="rgba(255,255,255,0.07)"
+            strokeWidth={strokeWidth}
+          />
+          {/* progress arc */}
+          <circle
+            cx={size / 2} cy={size / 2} r={radius}
+            fill="none"
+            stroke={arcColor}
+            strokeWidth={strokeWidth}
+            strokeLinecap="round"
+            strokeDasharray={`${dash} ${gap}`}
+            style={{ transition: "stroke-dasharray 0.8s ease" }}
+          />
+        </svg>
+        {/* centre label */}
+        <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+          <span style={{ fontSize: "1.45rem", fontWeight: 900, color: arcColor }}>{pct}%</span>
+        </div>
       </div>
-      <div style={{ marginTop: -6 }}>
-        <div style={{ color: "var(--muted)", fontSize: "0.85rem" }}>{label}</div>
-        <div style={{ fontSize: "1.2rem", fontWeight: 900 }}>{Math.round(value)}%</div>
-      </div>
+      <div style={{ color: "var(--muted)", fontSize: "0.85rem", fontWeight: 600 }}>{label}</div>
     </div>
   );
 }
