@@ -11,10 +11,9 @@ export const http = axios.create({
 
 http.interceptors.request.use((config) => {
   if (typeof window !== "undefined") {
-    const token = localStorage.getItem("learnova_token");
+    const token = localStorage.getItem("token") || localStorage.getItem("learnova_token");
     if (token) {
       config.headers = config.headers || {};
-      // Backend does not currently enforce auth, but keep this for production readiness.
       (config.headers as any).Authorization = `Bearer ${token}`;
     }
   }
