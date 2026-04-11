@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useMemo, useState } from "react";
+import { motion } from "framer-motion";
 import { CheckCircle2, ExternalLink, Lock, PlayCircle } from "lucide-react";
 
 import { api } from "@/lib/api";
@@ -13,39 +13,18 @@ export type TopicRow = {
 };
 
 type Props = {
-  userId: string;
   topics: TopicRow[];
   completedIds: Set<string>;
   unlockedTopicIds: Set<string>;
   onMarkDone: (topicId: string) => Promise<void>;
 };
 
-export function PracticeSessionPanel({ userId, topics, completedIds, unlockedTopicIds, onMarkDone }: Props) {
-  const [notes, setNotes] = useState<Record<string, string>>({});
-  const [saving, setSaving] = useState<Record<string, boolean>>({});
+export function PracticeSessionPanel({ topics, completedIds, unlockedTopicIds, onMarkDone }: Props) {
   const [resources, setResources] = useState<Record<string, { youtubeLink: string; gfgLink: string }>>({});
   const [loadingRes, setLoadingRes] = useState<Record<string, boolean>>({});
   const [resError, setResError] = useState<Record<string, string>>({});
 
   const visibleTopics = useMemo(() => topics.filter((t) => t?.id && t?.title), [topics]);
-
-  useEffect(() => {
-    if (!userId) return;
-    (async () => {
-      const initial: Record<string, string> = {};
-      await Promise.all(
-        visibleTopics.slice(0, 8).map(async (t) => {
-          try {
-            const r = await api.getNotes(userId, t.id);
-            initial[t.id] = r.notes ?? "";
-          } catch {
-            initial[t.id] = "";
-          }
-        })
-      );
-      setNotes((prev) => ({ ...initial, ...prev }));
-    })();
-  }, [userId, visibleTopics]);
 
   async function ensureResources(topicTitle: string) {
     if (resources[topicTitle]) return;
@@ -58,15 +37,6 @@ export function PracticeSessionPanel({ userId, topics, completedIds, unlockedTop
       setResError((p) => ({ ...p, [topicTitle]: e instanceof Error ? e.message : "Failed to fetch resources" }));
     } finally {
       setLoadingRes((p) => ({ ...p, [topicTitle]: false }));
-    }
-  }
-
-  async function saveTopicNotes(topicId: string) {
-    setSaving((p) => ({ ...p, [topicId]: true }));
-    try {
-      await api.saveNotes({ userId, topicId, notes: notes[topicId] ?? "" });
-    } finally {
-      setSaving((p) => ({ ...p, [topicId]: false }));
     }
   }
 
@@ -87,8 +57,7 @@ export function PracticeSessionPanel({ userId, topics, completedIds, unlockedTop
             <div>Topic</div>
             <div>Resources</div>
             <div>Practice</div>
-            <div>Notes</div>
-            <div>Complete</div>
+            <div className="practiceHeadComplete">Action</div>
           </div>
 
           {visibleTopics.map((t) => {
@@ -109,94 +78,56 @@ export function PracticeSessionPanel({ userId, topics, completedIds, unlockedTop
                 animate={{ opacity: locked ? 0.6 : 1 }}
                 transition={{ duration: 0.25 }}
               >
-                <div className="practiceCell">
-                  <div className="row" style={{ gap: "0.5rem", flexWrap: "nowrap" }}>
-                    {locked ? <Lock size={16} /> : isDone ? <CheckCircle2 size={16} /> : null}
+                <div className="practiceCell practiceCellTopic">
+                  <div className="practiceTopicInner">
+                    {locked ? <Lock size={16} className="practiceTopicIcon" /> : isDone ? <CheckCircle2 size={16} className="practiceTopicIcon" /> : <span className="practiceTopicSpacer" />}
                     <div style={{ minWidth: 0 }}>
                       <div className="truncate" title={t.title}>
                         {t.title}
                       </div>
-                      {t.suggested_skip && (
-                        <div style={{ color: "var(--warn)", fontSize: "0.8rem" }}>Optional skip</div>
-                      )}
+                      {t.suggested_skip && <div style={{ color: "var(--warn)", fontSize: "0.8rem", marginTop: 2 }}>Optional skip</div>}
                     </div>
                   </div>
                 </div>
 
-                <div className="practiceCell">
-                  <div className="stack" style={{ gap: "0.4rem" }}>
-                    <button
-                      type="button"
-                      className="linkPill"
-                      disabled={locked || isLoading}
-                      onClick={() => ensureResources(titleKey)}
-                    >
-                      {isLoading ? "Loading…" : "Load links"}
-                    </button>
-                    {errMsg && <span style={{ color: "var(--danger)", fontSize: "0.85rem" }}>{errMsg}</span>}
-                    {topicRes?.youtubeLink ? (
-                      <a href={topicRes.youtubeLink} target="_blank" rel="noreferrer" className="btn btn-ghost">
-                        <PlayCircle size={18} /> Watch Video <ExternalLink size={16} />
-                      </a>
-                    ) : (
-                      <span style={{ color: "var(--muted)" }}>Click “Load links” to fetch.</span>
-                    )}
-                  </div>
+                <div className="practiceCell practiceCellStack">
+                  <button type="button" className="linkPill" disabled={locked || isLoading} onClick={() => ensureResources(titleKey)}>
+                    {isLoading ? "Loading…" : "Load links"}
+                  </button>
+                  {errMsg && <span className="practiceCellHint practiceCellHintError">{errMsg}</span>}
+                  {topicRes?.youtubeLink ? (
+                    <a href={topicRes.youtubeLink} target="_blank" rel="noreferrer" className="btn btn-ghost practiceRowBtn">
+                      <PlayCircle size={18} /> Watch <ExternalLink size={16} />
+                    </a>
+                  ) : (
+                    <span className="practiceCellHint">Use “Load links” for video.</span>
+                  )}
                 </div>
 
-                <div className="practiceCell">
-                  <div className="stack" style={{ gap: "0.35rem" }}>
-                    {topicRes?.gfgLink ? (
-                      <a href={topicRes.gfgLink} target="_blank" rel="noreferrer" className="btn btn-ghost">
-                        💻 Practice on GFG <ExternalLink size={16} />
-                      </a>
-                    ) : (
-                      <span style={{ color: "var(--muted)" }}>Click “Load links” to fetch.</span>
-                    )}
-                  </div>
+                <div className="practiceCell practiceCellStack">
+                  {topicRes?.gfgLink ? (
+                    <a href={topicRes.gfgLink} target="_blank" rel="noreferrer" className="btn btn-ghost practiceRowBtn">
+                      GFG practice <ExternalLink size={16} />
+                    </a>
+                  ) : (
+                    <span className="practiceCellHint">Use “Load links” for practice.</span>
+                  )}
                 </div>
 
-                <div className="practiceCell">
-                  <textarea
-                    className="textarea"
-                    placeholder={locked ? "Locked" : "Write quick notes…"}
-                    disabled={locked}
-                    value={notes[t.id] ?? ""}
-                    onChange={(e) => setNotes((p) => ({ ...p, [t.id]: e.target.value }))}
-                    onBlur={() => {
-                      if (!locked) saveTopicNotes(t.id);
-                    }}
-                  />
-                  <div style={{ marginTop: 6, color: "var(--muted)", fontSize: "0.8rem" }}>
-                    {saving[t.id] ? "Saving…" : "Autosaves on blur"}
-                  </div>
-                </div>
-
-                <div className="practiceCell" style={{ justifySelf: "end" }}>
+                <div className="practiceCell practiceCellAction">
                   <button
                     type="button"
-                    className={`btn ${isDone ? "btn-success" : ""}`}
+                    className={`btn practiceMarkDoneBtn ${isDone ? "btn-success" : ""}`}
                     disabled={locked || isDone}
                     onClick={() => onMarkDone(t.id)}
                   >
-                    <AnimatePresence initial={false} mode="popLayout">
-                      {isDone ? (
-                        <motion.span
-                          key="done"
-                          initial={{ opacity: 0, y: 6 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -6 }}
-                          className="row"
-                          style={{ gap: 8 }}
-                        >
-                          <CheckCircle2 size={18} /> Done
-                        </motion.span>
-                      ) : (
-                        <motion.span key="mark" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                          Mark as done
-                        </motion.span>
-                      )}
-                    </AnimatePresence>
+                    {isDone ? (
+                      <>
+                        <CheckCircle2 size={18} aria-hidden /> Done
+                      </>
+                    ) : (
+                      "Mark as done"
+                    )}
                   </button>
                 </div>
               </motion.div>
@@ -207,4 +138,3 @@ export function PracticeSessionPanel({ userId, topics, completedIds, unlockedTop
     </div>
   );
 }
-

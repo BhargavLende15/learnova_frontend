@@ -111,16 +111,11 @@ export default function AssessmentPage() {
 
   return (
     <div className="container stack">
-      <header className="row" style={{ justifyContent: "space-between" }}>
-        <h1 style={{ margin: 0 }}>Adaptive assessment</h1>
-        <div className="row">
-          <Link href="/dashboard" className="btn btn-ghost">
-            Dashboard
-          </Link>
-          <Link href="/roadmap" className="btn btn-ghost">
-            Roadmap
-          </Link>
-        </div>
+      <header className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
+        <h1 className="pageTitle">Adaptive assessment</h1>
+        <Link href="/dashboard" className="btn btn-ghost">
+          Dashboard
+        </Link>
       </header>
 
       <div className="card stack">
@@ -170,15 +165,7 @@ export default function AssessmentPage() {
         {summary && (
           <div className="stack">
             <h3 style={{ margin: 0 }}>Results</h3>
-            <pre
-              style={{
-                background: "var(--bg)",
-                padding: "1rem",
-                borderRadius: 8,
-                overflow: "auto",
-                fontSize: "0.85rem",
-              }}
-            >
+            <pre className="preNeo">
               {JSON.stringify(summary.skill_levels, null, 2)}
             </pre>
             <Link className="btn" href="/roadmap">

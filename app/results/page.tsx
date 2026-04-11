@@ -58,7 +58,7 @@ function RadialStat({ label, value }: { label: string; value: number }) {
           <circle
             cx={size / 2} cy={size / 2} r={radius}
             fill="none"
-            stroke="rgba(255,255,255,0.07)"
+            stroke="rgba(128, 140, 160, 0.28)"
             strokeWidth={strokeWidth}
           />
           {/* progress arc */}
@@ -166,19 +166,11 @@ export default function ResultsPage() {
 
   return (
     <div className="container stack">
-      <header className="row" style={{ justifyContent: "space-between" }}>
-        <h1 style={{ margin: 0 }}>Results</h1>
-        <div className="row">
-          <Link href="/dashboard" className="btn btn-ghost">
-            Dashboard
-          </Link>
-          <Link href="/roadmap" className="btn btn-ghost">
-            Roadmap
-          </Link>
-          <Link href="/skill-map" className="btn btn-ghost">
-            Skill map
-          </Link>
-        </div>
+      <header className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
+        <h1 className="pageTitle">Results</h1>
+        <Link href="/roadmap" className="btn btn-ghost">
+          Roadmap
+        </Link>
       </header>
 
       {loading && <p style={{ color: "var(--muted)", margin: 0 }}>Loading…</p>}

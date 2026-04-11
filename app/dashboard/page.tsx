@@ -98,8 +98,8 @@ export default function DashboardPage() {
 
   return (
     <div className="container stack">
-      <header className="row" style={{ justifyContent: "space-between" }}>
-        <h1 style={{ margin: 0 }}>Goal & skills</h1>
+      <header className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
+        <h1 className="pageTitle">Goal & skills</h1>
         <Link href="/" className="btn btn-ghost">
           Home
         </Link>

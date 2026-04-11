@@ -67,16 +67,11 @@ export default function SkillMapPage() {
 
   return (
     <div className="container stack">
-      <header className="row" style={{ justifyContent: "space-between" }}>
-        <h1 style={{ margin: 0 }}>Skill map</h1>
-        <div className="row">
-          <Link href="/roadmap" className="btn btn-ghost">
-            Roadmap
-          </Link>
-          <Link href="/results" className="btn btn-ghost">
-            Results
-          </Link>
-        </div>
+      <header className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
+        <h1 className="pageTitle">Skill map</h1>
+        <Link href="/results" className="btn btn-ghost">
+          Results
+        </Link>
       </header>
 
       <div className="card stack">
@@ -107,7 +102,7 @@ export default function SkillMapPage() {
                 minValue: 0,
                 maxValue: 100,
               }}
-              emptyColor="rgba(255,255,255,0.04)"
+              emptyColor="rgba(128, 140, 160, 0.14)"
               enableLabels={false}
               tooltip={({ cell }: any) => {
                 const meta = cell?.data?.meta as TopicStat | null;
