@@ -3,10 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
 import { Flame, Trophy, UserCircle2 } from "lucide-react";
 
 import { api } from "@/lib/api";
+import { Alert, LoadingState, PageHeader } from "@/components/ui";
 
 type Profile = {
   userId: string;
@@ -25,7 +25,6 @@ function clamp(n: number, a: number, b: number) {
 
 export default function ProfilePage() {
   const router = useRouter();
-  const [userId, setUserId] = useState("");
   const [p, setP] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -36,7 +35,6 @@ export default function ProfilePage() {
       router.replace("/");
       return;
     }
-    setUserId(uid);
     (async () => {
       setLoading(true);
       setError("");
@@ -60,85 +58,86 @@ export default function ProfilePage() {
 
   return (
     <div className="container stack">
-      <header className="row" style={{ justifyContent: "space-between" }}>
-        <h1 style={{ margin: 0 }}>Profile</h1>
-        <div className="row">
-          <Link href="/roadmap" className="btn btn-ghost">
-            Roadmap
-          </Link>
-          <Link href="/dashboard" className="btn btn-ghost">
-            Dashboard
-          </Link>
-        </div>
-      </header>
+      <PageHeader title="Profile" description="Your progress, streak, and recent topic completions.">
+        <Link href="/roadmap" className="btn btn-ghost">
+          Roadmap
+        </Link>
+        <Link href="/dashboard" className="btn btn-ghost">
+          Dashboard
+        </Link>
+      </PageHeader>
 
-      {loading && <p style={{ color: "var(--muted)", margin: 0 }}>Loading…</p>}
-      {error && <p className="error">{error}</p>}
+      {loading ? <LoadingState message="Loading profile…" /> : null}
 
-      {!loading && !error && p && (
+      {!loading && error ? (
+        <Alert variant="error" title="Could not load profile">
+          {error}
+        </Alert>
+      ) : null}
+
+      {!loading && !error && p ? (
         <div className="profileGrid">
-          <motion.div className="card stack" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-            <div className="row" style={{ justifyContent: "space-between" }}>
-              <div className="row" style={{ gap: 10 }}>
-                <UserCircle2 />
-                <div>
-                  <div style={{ fontWeight: 1000, fontSize: "1.15rem" }}>{p.name}</div>
-                  <div style={{ color: "var(--muted)" }}>{p.email}</div>
-                </div>
+          <div className="card stack fade-in-up">
+            <div className="row" style={{ gap: 12 }}>
+              <UserCircle2 size={40} aria-hidden style={{ flexShrink: 0, opacity: 0.9 }} />
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontWeight: 800, fontSize: "1.125rem", letterSpacing: "-0.02em" }}>{p.name}</div>
+                <div style={{ color: "var(--muted)", fontSize: "0.9375rem" }}>{p.email}</div>
               </div>
             </div>
-          </motion.div>
+          </div>
 
-          <motion.div className="card stack" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+          <div className="card stack fade-in-up" style={{ animationDelay: "0.05s" }}>
             <div className="row" style={{ justifyContent: "space-between" }}>
               <div>
-                <div style={{ color: "var(--muted)", fontSize: "0.85rem" }}>Total Points</div>
-                <div style={{ fontWeight: 1100, fontSize: "2.4rem", marginTop: 4 }}>{p.points}</div>
+                <div style={{ color: "var(--muted)", fontSize: "0.8125rem", fontWeight: 600 }}>Total points</div>
+                <div style={{ fontWeight: 800, fontSize: "2.25rem", marginTop: 4, letterSpacing: "-0.03em" }}>{p.points}</div>
               </div>
-              <Trophy />
+              <Trophy size={32} aria-hidden style={{ opacity: 0.85 }} />
             </div>
-          </motion.div>
+          </div>
 
-          <motion.div className="card stack" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+          <div className="card stack fade-in-up" style={{ animationDelay: "0.1s" }}>
             <div className="row" style={{ justifyContent: "space-between" }}>
               <div>
-                <div style={{ color: "var(--muted)", fontSize: "0.85rem" }}>Current streak</div>
-                <div style={{ fontWeight: 1100, fontSize: "2.0rem", marginTop: 4 }}>{p.streak} days</div>
+                <div style={{ color: "var(--muted)", fontSize: "0.8125rem", fontWeight: 600 }}>Current streak</div>
+                <div style={{ fontWeight: 800, fontSize: "1.85rem", marginTop: 4, letterSpacing: "-0.02em" }}>{p.streak} days</div>
               </div>
-              <Flame />
+              <Flame size={32} aria-hidden style={{ opacity: 0.85 }} />
             </div>
-          </motion.div>
+          </div>
 
-          <motion.div className="card stack" style={{ gridColumn: "1 / -1" }} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+          <div className="card stack fade-in-up" style={{ gridColumn: "1 / -1", animationDelay: "0.12s" }}>
             <div className="row" style={{ justifyContent: "space-between", alignItems: "baseline" }}>
-              <h2 style={{ margin: 0, fontSize: "1.1rem" }}>Progress</h2>
-              <span style={{ color: "var(--muted)", fontWeight: 800 }}>
+              <h2 className="sectionTitle">Progress</h2>
+              <span style={{ color: "var(--muted)", fontWeight: 700, fontSize: "0.875rem" }}>
                 {progress.done} / {progress.total} topics completed
               </span>
             </div>
-            <div className="barTrack" style={{ height: 14 }}>
+            <div className="barTrack" style={{ height: 14, marginTop: 8 }}>
               <div className="barFill" style={{ width: `${progress.pct}%` }} />
             </div>
-          </motion.div>
+          </div>
 
-          <motion.div className="card stack" style={{ gridColumn: "1 / -1" }} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-            <h2 style={{ margin: 0, fontSize: "1.1rem" }}>Recent activity</h2>
+          <div className="card stack fade-in-up" style={{ gridColumn: "1 / -1", animationDelay: "0.16s" }}>
+            <h2 className="sectionTitle">Recent activity</h2>
             {(p.recentCompletedTopics || []).length === 0 ? (
-              <p style={{ margin: 0, color: "var(--muted)" }}>No completed topics yet.</p>
+              <p style={{ margin: 0, color: "var(--muted)" }}>No completed topics yet. Finish items on your roadmap to see them here.</p>
             ) : (
-              <div className="stack" style={{ gap: "0.5rem" }}>
+              <ul className="stack" style={{ gap: "0.5rem", listStyle: "none", margin: 0, padding: 0 }}>
                 {p.recentCompletedTopics.map((id) => (
-                  <div key={id} className="row" style={{ justifyContent: "space-between" }}>
-                    <span style={{ fontWeight: 900 }}>{id}</span>
+                  <li key={id} className="row" style={{ justifyContent: "space-between" }}>
+                    <span className="truncate" style={{ fontWeight: 700 }} title={id}>
+                      {id}
+                    </span>
                     <span className="badge">Completed</span>
-                  </div>
+                  </li>
                 ))}
-              </div>
+              </ul>
             )}
-          </motion.div>
+          </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
-

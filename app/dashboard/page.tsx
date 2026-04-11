@@ -1,12 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
+import { Alert, LoadingState, PageHeader } from "@/components/ui";
 
 export default function DashboardPage() {
   const router = useRouter();
+  const gid = useId();
+  const goalSelectId = `${gid}-goal`;
+
   const [goals, setGoals] = useState<string[]>([]);
   const [skills, setSkills] = useState<string[]>([]);
   const [goal, setGoal] = useState("");
@@ -90,31 +94,28 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="container">
-        <p style={{ color: "var(--muted)" }}>Loading…</p>
+      <div className="container stack">
+        <PageHeader title="Goal & skills" description="Choose what you want to learn next." />
+        <LoadingState message="Loading catalog…" />
       </div>
     );
   }
 
   return (
     <div className="container stack">
-      <header className="row" style={{ justifyContent: "space-between" }}>
-        <h1 style={{ margin: 0 }}>Goal & skills</h1>
+      <PageHeader title="Goal & skills" description="Choose your career goal and the skills to assess. Only catalog options are allowed.">
         <Link href="/" className="btn btn-ghost">
           Home
         </Link>
-      </header>
+      </PageHeader>
 
       <div className="card stack">
-        <p style={{ color: "var(--muted)", margin: 0 }}>
-          Choose your career goal and the skills to assess. Only catalog options are allowed (no free
-          text).
-        </p>
-
         <div>
-          <label className="label">Career goal</label>
-          <select className="input" value={goal} onChange={(e) => setGoal(e.target.value)}>
-            <option value="">Select…</option>
+          <label className="label" htmlFor={goalSelectId}>
+            Career goal
+          </label>
+          <select id={goalSelectId} className="input" value={goal} onChange={(e) => setGoal(e.target.value)}>
+            <option value="">Select a goal…</option>
             {goals.map((g) => (
               <option key={g} value={g}>
                 {g}
@@ -123,28 +124,34 @@ export default function DashboardPage() {
           </select>
         </div>
 
-        {goal && (
-          <div>
-            <label className="label">Skills (multi-select)</label>
-            <div className="stack" style={{ gap: "0.4rem" }}>
-              {skills.map((s) => (
-                <label key={s} className="row" style={{ cursor: "pointer" }}>
-                  <input
-                    type="checkbox"
-                    checked={selected.has(s)}
-                    onChange={() => toggleSkill(s)}
-                  />
-                  <span>{s}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-        )}
+        {goal ? (
+          <fieldset className="stack" style={{ border: "none", margin: 0, padding: 0, minWidth: 0 }}>
+            <legend className="label" style={{ padding: 0 }}>
+              Skills (select one or more)
+            </legend>
+            {skills.length === 0 ? (
+              <p style={{ margin: 0, color: "var(--muted)" }}>No skills listed for this goal.</p>
+            ) : (
+              <div className="skillList">
+                {skills.map((s) => (
+                  <label key={s} className="skillCheck">
+                    <input type="checkbox" checked={selected.has(s)} onChange={() => toggleSkill(s)} />
+                    <span>{s}</span>
+                  </label>
+                ))}
+              </div>
+            )}
+          </fieldset>
+        ) : null}
 
-        {error && <p className="error">{error}</p>}
+        {error ? (
+          <Alert variant="error" title="Something went wrong">
+            {error}
+          </Alert>
+        ) : null}
 
         <div className="row">
-          <button className="btn" type="button" onClick={save} disabled={saving}>
+          <button className="btn" type="button" onClick={save} disabled={saving} aria-busy={saving}>
             {saving ? "Saving…" : "Save & start assessment"}
           </button>
           <Link href="/roadmap" className="btn btn-ghost">

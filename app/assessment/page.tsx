@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
+import { Alert, PageHeader, Spinner } from "@/components/ui";
 
 type Question = {
   skill: string;
@@ -111,43 +112,41 @@ export default function AssessmentPage() {
 
   return (
     <div className="container stack">
-      <header className="row" style={{ justifyContent: "space-between" }}>
-        <h1 style={{ margin: 0 }}>Adaptive assessment</h1>
-        <div className="row">
-          <Link href="/dashboard" className="btn btn-ghost">
-            Dashboard
-          </Link>
-          <Link href="/roadmap" className="btn btn-ghost">
-            Roadmap
-          </Link>
-        </div>
-      </header>
+      <PageHeader title="Adaptive assessment" description="Questions adapt as you answer. Finalize when you are done to record skill levels.">
+        <Link href="/dashboard" className="btn btn-ghost">
+          Dashboard
+        </Link>
+        <Link href="/roadmap" className="btn btn-ghost">
+          Roadmap
+        </Link>
+      </PageHeader>
 
-      <div className="card stack">
-        <p style={{ color: "var(--muted)", margin: 0 }}>
-          Questions adapt in real time: correct answers tend to raise difficulty; wrong answers lower
-          it. Finish when prompted, then finalize to record skill levels.
-        </p>
-
-        {!sessionId && (
+      <div className="card stack" aria-busy={loading}>
+        {!sessionId ? (
           <button className="btn" type="button" onClick={start} disabled={loading || !userId}>
-            {loading ? "…" : "Start assessment"}
+            {loading ? (
+              <span className="row" style={{ gap: 8 }}>
+                <Spinner label="Starting" />
+                Starting…
+              </span>
+            ) : (
+              "Start assessment"
+            )}
           </button>
-        )}
+        ) : null}
 
-        {sessionId && question && (
-          <div className="stack">
-            <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.9rem" }}>
+        {sessionId && question ? (
+          <div className="stack fade-in-up">
+            <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.875rem" }}>
               {question.skill} · tier {question.difficulty_tier}
             </p>
-            <p style={{ margin: 0, fontSize: "1.05rem" }}>{question.question}</p>
-            <div className="stack" style={{ gap: "0.5rem" }}>
+            <p style={{ margin: 0, fontSize: "1.0625rem", fontWeight: 600 }}>{question.question}</p>
+            <div className="stack" style={{ gap: "0.5rem" }} role="group" aria-label="Answer choices">
               {question.options.map((o) => (
                 <button
                   key={o}
                   type="button"
-                  className="btn btn-ghost"
-                  style={{ justifyContent: "flex-start", textAlign: "left" }}
+                  className="btn btn-ghost btnBlock"
                   disabled={loading}
                   onClick={() => answer(o)}
                 >
@@ -156,39 +155,46 @@ export default function AssessmentPage() {
               ))}
             </div>
           </div>
-        )}
+        ) : null}
 
-        {sessionId && done && !question && !summary && (
+        {sessionId && done && !question && !summary ? (
           <button className="btn" type="button" onClick={finalize} disabled={loading}>
-            Finalize assessment
+            {loading ? (
+              <span className="row" style={{ gap: 8 }}>
+                <Spinner label="Finalizing" />
+                Finalizing…
+              </span>
+            ) : (
+              "Finalize assessment"
+            )}
           </button>
-        )}
+        ) : null}
 
-        {feedback && <p style={{ color: "var(--success)", margin: 0 }}>{feedback}</p>}
-        {error && <p className="error">{error}</p>}
+        {feedback ? (
+          <p className="feedbackSuccess" role="status">
+            {feedback}
+          </p>
+        ) : null}
+        {error ? (
+          <Alert variant="error" title="Action needed">
+            {error}
+          </Alert>
+        ) : null}
 
-        {summary && (
-          <div className="stack">
-            <h3 style={{ margin: 0 }}>Results</h3>
-            <pre
-              style={{
-                background: "var(--bg)",
-                padding: "1rem",
-                borderRadius: 8,
-                overflow: "auto",
-                fontSize: "0.85rem",
-              }}
-            >
-              {JSON.stringify(summary.skill_levels, null, 2)}
-            </pre>
-            <Link className="btn" href="/roadmap">
-              Generate / view roadmap
-            </Link>
-            <Link className="btn btn-ghost" href="/results">
-              Open results dashboard
-            </Link>
+        {summary ? (
+          <div className="stack fade-in-up">
+            <h2 className="sectionTitle">Results snapshot</h2>
+            <pre className="preJson">{JSON.stringify((summary as { skill_levels?: unknown }).skill_levels ?? summary, null, 2)}</pre>
+            <div className="row">
+              <Link className="btn" href="/roadmap">
+                Generate / view roadmap
+              </Link>
+              <Link className="btn btn-ghost" href="/results">
+                Open results dashboard
+              </Link>
+            </div>
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   );

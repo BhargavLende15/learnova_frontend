@@ -1,28 +1,26 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ResponsiveHeatMap } from "@nivo/heatmap";
 import { api } from "@/lib/api";
+import { Alert, EmptyState, LoadingState, PageHeader } from "@/components/ui";
+import type { TopicStat } from "@/components/SkillMapChart";
 
-type TopicStat = {
-  topicId: string;
-  topicName: string;
-  accuracyPct: number;
-  attempts: number;
-  masteryLevel: "Weak" | "متوسط" | "Strong" | string;
-};
-
-function chunk<T>(arr: T[], size: number) {
-  const out: T[][] = [];
-  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
-  return out;
-}
+const SkillMapChart = dynamic(() => import("@/components/SkillMapChart"), {
+  ssr: false,
+  loading: () => (
+    <div
+      className="skillMapChart skeletonLine"
+      style={{ borderRadius: "var(--radius-md)", minHeight: 280 }}
+      aria-hidden
+    />
+  ),
+});
 
 export default function SkillMapPage() {
   const router = useRouter();
-  const [userId, setUserId] = useState("");
   const [topics, setTopics] = useState<TopicStat[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -33,7 +31,6 @@ export default function SkillMapPage() {
       router.replace("/");
       return;
     }
-    setUserId(uid);
     (async () => {
       try {
         const r = await api.getSkillMapData(uid);
@@ -46,92 +43,40 @@ export default function SkillMapPage() {
     })();
   }, [router]);
 
-  const heatmap = useMemo(() => {
-    const cols = 10;
-    const rows = chunk(topics, cols);
-    const xKeys = Array.from({ length: cols }, (_, i) => `c${i + 1}`);
-    const data = rows.map((row, rIdx) => {
-      const d: any[] = [];
-      for (let i = 0; i < cols; i++) {
-        const t = row[i];
-        d.push({
-          x: xKeys[i],
-          y: t ? Math.max(0, Math.min(100, Number(t.accuracyPct ?? 0))) : null,
-          meta: t ?? null,
-        });
-      }
-      return { id: `row-${rIdx + 1}`, data: d };
-    });
-    return { data, xKeys };
-  }, [topics]);
-
   return (
     <div className="container stack">
-      <header className="row" style={{ justifyContent: "space-between" }}>
-        <h1 style={{ margin: 0 }}>Skill map</h1>
-        <div className="row">
-          <Link href="/roadmap" className="btn btn-ghost">
-            Roadmap
-          </Link>
-          <Link href="/results" className="btn btn-ghost">
-            Results
-          </Link>
-        </div>
-      </header>
+      <PageHeader title="Skill map" description="Topic mastery as a heatmap — darker green means stronger performance.">
+        <Link href="/roadmap" className="btn btn-ghost">
+          Roadmap
+        </Link>
+        <Link href="/results" className="btn btn-ghost">
+          Results
+        </Link>
+      </PageHeader>
 
       <div className="card stack">
-        <p style={{ margin: 0, color: "var(--muted)" }}>
-          Each block is a topic. Color intensity reflects mastery (red → weak, yellow → متوسط, green → strong).
-        </p>
+        {loading ? <LoadingState message="Loading skill map…" /> : null}
 
-        {loading && <p style={{ color: "var(--muted)", margin: 0 }}>Loading…</p>}
-        {error && <p className="error">{error}</p>}
+        {!loading && error ? (
+          <Alert variant="error" title="Could not load map">
+            {error}
+          </Alert>
+        ) : null}
 
-        {!loading && !error && (
-          <div style={{ height: 420 }}>
-            <ResponsiveHeatMap
-              data={heatmap.data as any}
-              margin={{ top: 16, right: 16, bottom: 16, left: 60 }}
-              forceSquare={true}
-              axisTop={null}
-              axisRight={null}
-              axisBottom={null}
-              axisLeft={null}
-              borderWidth={1}
-              borderColor={{ from: "color", modifiers: [["darker", 0.6]] }}
-              borderRadius={4}
-              colors={{
-                type: "diverging",
-                scheme: "red_yellow_green",
-                divergeAt: 0.5,
-                minValue: 0,
-                maxValue: 100,
-              }}
-              emptyColor="rgba(255,255,255,0.04)"
-              enableLabels={false}
-              tooltip={({ cell }: any) => {
-                const meta = cell?.data?.meta as TopicStat | null;
-                if (!meta) return null;
-                return (
-                  <div className="card" style={{ padding: "0.75rem 0.9rem", minWidth: 220 }}>
-                    <div style={{ fontWeight: 800 }}>{meta.topicName}</div>
-                    <div style={{ color: "var(--muted)", fontSize: "0.9rem", marginTop: 4 }}>
-                      Accuracy: <strong style={{ color: "var(--text)" }}>{Math.round(meta.accuracyPct)}%</strong>
-                    </div>
-                    <div style={{ color: "var(--muted)", fontSize: "0.9rem" }}>
-                      Attempts: <strong style={{ color: "var(--text)" }}>{meta.attempts}</strong>
-                    </div>
-                    <div style={{ color: "var(--muted)", fontSize: "0.9rem" }}>
-                      Mastery: <strong style={{ color: "var(--text)" }}>{meta.masteryLevel}</strong>
-                    </div>
-                  </div>
-                );
-              }}
-            />
-          </div>
-        )}
+        {!loading && !error && topics.length === 0 ? (
+          <EmptyState
+            title="No topic data yet"
+            description="Practice topics on your roadmap to build accuracy stats for this view."
+            action={
+              <Link href="/roadmap" className="btn">
+                Open roadmap
+              </Link>
+            }
+          />
+        ) : null}
+
+        {!loading && !error && topics.length > 0 ? <SkillMapChart topics={topics} /> : null}
       </div>
     </div>
   );
 }
-

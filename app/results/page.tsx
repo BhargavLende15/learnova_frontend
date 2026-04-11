@@ -3,9 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
 import { Award, Flame, Target, Timer, TrendingUp } from "lucide-react";
 import { api } from "@/lib/api";
+import { Alert, EmptyState, LoadingState, PageHeader } from "@/components/ui";
 
 type Gamification = {
   points: number;
@@ -25,13 +25,15 @@ function avg(nums: number[]) {
 
 function kpi(label: string, value: string, icon: React.ReactNode) {
   return (
-    <div className="card" style={{ padding: "1rem 1.1rem" }}>
+    <div className="card kpiCard fade-in-up">
       <div className="row" style={{ justifyContent: "space-between", alignItems: "flex-start" }}>
         <div>
-          <div style={{ color: "var(--muted)", fontSize: "0.85rem" }}>{label}</div>
-          <div style={{ fontSize: "1.45rem", fontWeight: 900, marginTop: 4 }}>{value}</div>
+          <div style={{ color: "var(--muted)", fontSize: "0.8125rem", fontWeight: 600 }}>{label}</div>
+          <div style={{ fontSize: "1.35rem", fontWeight: 800, marginTop: 4, letterSpacing: "-0.02em" }}>{value}</div>
         </div>
-        <div style={{ opacity: 0.9 }}>{icon}</div>
+        <div style={{ opacity: 0.9 }} aria-hidden>
+          {icon}
+        </div>
       </div>
     </div>
   );
@@ -45,39 +47,40 @@ function RadialStat({ label, value }: { label: string; value: number }) {
   const circumference = 2 * Math.PI * radius;
   const dash = (pct / 100) * circumference;
   const gap = circumference - dash;
-
-  // hue: 0=red → 60=yellow → 120=green, proportional to pct
   const hue = Math.round(pct * 1.2);
-  const arcColor = `hsl(${hue}, 80%, 55%)`;
+  const arcColor = `hsl(${hue}, 78%, 58%)`;
 
   return (
-    <div className="card" style={{ padding: "1.25rem 1.1rem", display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
-      <div style={{ position: "relative", width: size, height: size }}>
-        <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
-          {/* background track */}
+    <div className="card radialCard fade-in-up" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+      <div style={{ position: "relative", width: size, height: size }} role="img" aria-label={`${label}: ${pct} percent`}>
+        <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }} aria-hidden>
+          <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={strokeWidth} />
           <circle
-            cx={size / 2} cy={size / 2} r={radius}
-            fill="none"
-            stroke="rgba(255,255,255,0.07)"
-            strokeWidth={strokeWidth}
-          />
-          {/* progress arc */}
-          <circle
-            cx={size / 2} cy={size / 2} r={radius}
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
             fill="none"
             stroke={arcColor}
             strokeWidth={strokeWidth}
             strokeLinecap="round"
             strokeDasharray={`${dash} ${gap}`}
-            style={{ transition: "stroke-dasharray 0.8s ease" }}
+            style={{ transition: "stroke-dasharray 0.8s cubic-bezier(0.22, 1, 0.36, 1)" }}
           />
         </svg>
-        {/* centre label */}
-        <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-          <span style={{ fontSize: "1.45rem", fontWeight: 900, color: arcColor }}>{pct}%</span>
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <span style={{ fontSize: "1.35rem", fontWeight: 800, color: arcColor }}>{pct}%</span>
         </div>
       </div>
-      <div style={{ color: "var(--muted)", fontSize: "0.85rem", fontWeight: 600 }}>{label}</div>
+      <div style={{ color: "var(--muted)", fontSize: "0.8125rem", fontWeight: 600 }}>{label}</div>
     </div>
   );
 }
@@ -87,7 +90,7 @@ export default function ResultsPage() {
   const [userId, setUserId] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<Record<string, unknown> | null>(null);
   const [g, setG] = useState<Gamification | null>(null);
   const [takenSec, setTakenSec] = useState<number>(0);
 
@@ -119,16 +122,13 @@ export default function ResultsPage() {
   }, []);
 
   const metrics = useMemo(() => {
-    const raw = result?.raw_scores ? Object.values(result.raw_scores).map((x: any) => Number(x) || 0) : [];
+    const raw = result?.raw_scores ? Object.values(result.raw_scores as Record<string, unknown>).map((x) => Number(x) || 0) : [];
     const marks = clamp(avg(raw), 0, 100);
-
     const expectedSec = 15 * 25;
     const speedRatio = takenSec > 0 ? clamp(expectedSec / takenSec, 0.4, 1.4) : 1;
-
     const accuracy = marks;
     const confidence = clamp(50 + (speedRatio - 1) * 40, 0, 100);
     const efficiency = clamp(marks * speedRatio, 0, 100);
-
     return { marks, accuracy, confidence, efficiency, takenSec, expectedSec };
   }, [result, takenSec]);
 
@@ -166,80 +166,75 @@ export default function ResultsPage() {
 
   return (
     <div className="container stack">
-      <header className="row" style={{ justifyContent: "space-between" }}>
-        <h1 style={{ margin: 0 }}>Results</h1>
-        <div className="row">
-          <Link href="/dashboard" className="btn btn-ghost">
-            Dashboard
-          </Link>
-          <Link href="/roadmap" className="btn btn-ghost">
-            Roadmap
-          </Link>
-          <Link href="/skill-map" className="btn btn-ghost">
-            Skill map
-          </Link>
+      <PageHeader title="Results" description="Scores, streaks, and per-skill breakdown from your latest assessment.">
+        <Link href="/dashboard" className="btn btn-ghost">
+          Dashboard
+        </Link>
+        <Link href="/roadmap" className="btn btn-ghost">
+          Roadmap
+        </Link>
+        <Link href="/skill-map" className="btn btn-ghost">
+          Skill map
+        </Link>
+      </PageHeader>
+
+      {loading ? <LoadingState message="Loading results…" /> : null}
+
+      {!loading && error ? (
+        <div className="card stack">
+          <Alert variant="error" title="No results to show">{error}</Alert>
+          <EmptyState
+            title="Take an assessment first"
+            description="Complete the adaptive assessment to see scores and credentials here."
+            action={
+              <Link href="/assessment" className="btn">
+                Start assessment
+              </Link>
+            }
+          />
         </div>
-      </header>
+      ) : null}
 
-      {loading && <p style={{ color: "var(--muted)", margin: 0 }}>Loading…</p>}
-      {error && <p className="error">{error}</p>}
-
-      {!loading && !error && result && (
+      {!loading && !error && result ? (
         <div className="stack">
-          <motion.div
-            className="card"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35 }}
-            style={{ textAlign: "center" }}
-          >
-            <div style={{ color: "var(--muted)", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+          <div className="card fade-in-up" style={{ textAlign: "center" }}>
+            <div style={{ color: "var(--muted)", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", fontSize: "0.75rem" }}>
               Score
             </div>
-            <div style={{ fontSize: "3.2rem", fontWeight: 1000, marginTop: 8 }}>
+            <div style={{ fontSize: "clamp(2.5rem, 8vw, 3.25rem)", fontWeight: 800, marginTop: 8, letterSpacing: "-0.03em" }}>
               {Math.round(metrics.marks)}
-              <span style={{ fontSize: "1.1rem", color: "var(--muted)" }}>/100</span>
+              <span style={{ fontSize: "1rem", color: "var(--muted)", fontWeight: 600 }}>/100</span>
             </div>
-            <div style={{ color: "var(--muted)", marginTop: 8 }}>
+            <div style={{ color: "var(--muted)", marginTop: 8, fontSize: "0.9375rem" }}>
               Time: {metrics.takenSec ? `${Math.round(metrics.takenSec)}s` : "—"} · Expected: ~{metrics.expectedSec}s
-            </div>
-          </motion.div>
-
-          <div className="row" style={{ alignItems: "stretch" }}>
-            <div style={{ flex: "1 1 260px", minWidth: 240 }}>
-              <RadialStat label="Accuracy" value={metrics.accuracy} />
-            </div>
-            <div style={{ flex: "1 1 260px", minWidth: 240 }}>
-              <RadialStat label="Confidence" value={metrics.confidence} />
-            </div>
-            <div style={{ flex: "1 1 260px", minWidth: 240 }}>
-              <RadialStat label="Efficiency" value={metrics.efficiency} />
             </div>
           </div>
 
-          <div className="row" style={{ alignItems: "stretch" }}>
-            <div style={{ flex: "1 1 220px", minWidth: 220 }}>{kpi("Marks", `${Math.round(metrics.marks)}%`, <Target />)}</div>
-            <div style={{ flex: "1 1 220px", minWidth: 220 }}>
-              {kpi("Efficiency", `${Math.round(metrics.efficiency)}%`, <TrendingUp />)}
-            </div>
-            <div style={{ flex: "1 1 220px", minWidth: 220 }}>
-              {kpi("Time", metrics.takenSec ? `${Math.round(metrics.takenSec)}s` : "—", <Timer />)}
-            </div>
+          <div className="statGrid">
+            <RadialStat label="Accuracy" value={metrics.accuracy} />
+            <RadialStat label="Confidence" value={metrics.confidence} />
+            <RadialStat label="Efficiency" value={metrics.efficiency} />
+          </div>
+
+          <div className="statGrid">
+            {kpi("Marks", `${Math.round(metrics.marks)}%`, <Target />)}
+            {kpi("Efficiency", `${Math.round(metrics.efficiency)}%`, <TrendingUp />)}
+            {kpi("Time", metrics.takenSec ? `${Math.round(metrics.takenSec)}s` : "—", <Timer />)}
           </div>
 
           <div className="card stack">
             <div className="row" style={{ justifyContent: "space-between" }}>
-              <h2 style={{ margin: 0, fontSize: "1.1rem" }}>Credentials</h2>
-              {g && (
+              <h2 className="sectionTitle">Credentials</h2>
+              {g ? (
                 <div className="row" style={{ gap: 10 }}>
                   <span className="pill">
-                    <Flame size={16} /> {g.streakCount} day streak
+                    <Flame size={16} aria-hidden /> {g.streakCount} day streak
                   </span>
                   <span className="pill">
-                    <Award size={16} /> {g.points} pts
+                    <Award size={16} aria-hidden /> {g.points} pts
                   </span>
                 </div>
-              )}
+              ) : null}
             </div>
             <div className="row" style={{ gap: 10 }}>
               {(g?.badges?.length ? g.badges : ["Beginner"]).map((b) => (
@@ -251,30 +246,25 @@ export default function ResultsPage() {
           </div>
 
           <div className="card stack">
-            <h2 style={{ margin: 0, fontSize: "1.1rem" }}>Per-skill breakdown</h2>
+            <h2 className="sectionTitle">Per-skill breakdown</h2>
             <div className="stack" style={{ gap: "0.6rem" }}>
-              {Object.entries(result.raw_scores || {}).map(([skill, score]: any) => (
-                <motion.div
-                  key={skill}
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.25 }}
-                  className="barRow"
-                >
-                  <div style={{ minWidth: 120, fontWeight: 800 }}>{skill}</div>
+              {Object.entries((result.raw_scores as Record<string, unknown>) || {}).map(([skill, score], i) => (
+                <div key={skill} className="barRow fade-in-up" style={{ animationDelay: `${i * 0.04}s` }}>
+                  <div className="truncate" style={{ fontWeight: 700 }} title={skill}>
+                    {skill}
+                  </div>
                   <div className="barTrack">
                     <div className="barFill" style={{ width: `${clamp(Number(score) || 0, 0, 100)}%` }} />
                   </div>
-                  <div style={{ width: 60, textAlign: "right", color: "var(--muted)", fontWeight: 800 }}>
+                  <div style={{ textAlign: "right", color: "var(--muted)", fontWeight: 700, minWidth: "3ch" }}>
                     {Math.round(Number(score) || 0)}%
                   </div>
-                </motion.div>
+                </div>
               ))}
             </div>
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
-

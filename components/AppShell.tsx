@@ -16,6 +16,13 @@ type Profile = {
   streak: number;
 };
 
+const NAV = [
+  { href: "/roadmap", label: "Roadmap" },
+  { href: "/results", label: "Results" },
+  { href: "/skill-map", label: "Skill map" },
+  { href: "/profile", label: "Profile" },
+] as const;
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -23,7 +30,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const uid = typeof window !== "undefined" ? localStorage.getItem("learnova_user_id") : null;
-    const token = typeof window !== "undefined" ? (localStorage.getItem("token") || localStorage.getItem("learnova_token")) : null;
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("token") || localStorage.getItem("learnova_token") : null;
     if (!uid) {
       setProfile(null);
       return;
@@ -45,16 +53,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         }
       }
     })();
-  }, [pathname]);
+  }, [pathname, router]);
 
   useEffect(() => {
     function onUpdate() {
       const uid = typeof window !== "undefined" ? localStorage.getItem("learnova_user_id") : null;
       if (!uid) return;
-      api.profile(uid).then((p) => setProfile({ userId: uid, name: p.name, email: p.email, points: p.points ?? 0, streak: p.streak ?? 0 })).catch(() => {});
+      api
+        .profile(uid)
+        .then((p) => setProfile({ userId: uid, name: p.name, email: p.email, points: p.points ?? 0, streak: p.streak ?? 0 }))
+        .catch(() => {});
     }
-    window.addEventListener("learnova:profile-updated", onUpdate as any);
-    return () => window.removeEventListener("learnova:profile-updated", onUpdate as any);
+    window.addEventListener("learnova:profile-updated", onUpdate as EventListener);
+    return () => window.removeEventListener("learnova:profile-updated", onUpdate as EventListener);
   }, []);
 
   const showNav = pathname !== "/";
@@ -70,52 +81,58 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <>
+      <a href="#main-content" className="skipLink">
+        Skip to main content
+      </a>
       <Toaster
         position="top-right"
         toastOptions={{
+          duration: 4000,
           style: {
-            background: "rgba(15, 20, 35, 0.9)",
+            background: "rgba(13, 19, 36, 0.95)",
             color: "var(--text)",
             border: "1px solid var(--border)",
-            borderRadius: 14,
+            borderRadius: 12,
             backdropFilter: "blur(10px)",
           },
         }}
       />
       {showNav && (
-        <div className="navBar">
+        <header className="navBar" role="banner">
           <div className="navInner">
-            <button type="button" className="navBrand" onClick={() => router.push("/dashboard")}>
+            <button type="button" className="navBrand" onClick={() => router.push("/dashboard")} aria-label="Learnova home, go to dashboard">
               Learnova
             </button>
-            <div className="row" style={{ gap: 10 }}>
-              <Link href="/roadmap" className="navLink">
-                Roadmap
-              </Link>
-              <Link href="/results" className="navLink">
-                Results
-              </Link>
-              <Link href="/skill-map" className="navLink">
-                Skill map
-              </Link>
-              <Link href="/profile" className="navLink">
-                <User size={16} /> Profile
-              </Link>
-            </div>
-            <div className="row" style={{ gap: 10 }}>
-              <span className="pill">
-                <Flame size={16} /> {profile?.streak ?? 0}
+            <nav className="navLinks" aria-label="Primary">
+              {NAV.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="navLink"
+                  aria-current={pathname === item.href ? "page" : undefined}
+                >
+                  {item.href === "/profile" ? <User size={16} aria-hidden /> : null}
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+            <div className="navMeta">
+              <span className="pill" title="Login streak">
+                <Flame size={16} aria-hidden /> {profile?.streak ?? 0}
               </span>
-              <span className="pill">{profile ? `${profile.points} pts` : "— pts"}</span>
+              <span className="pill" title="Total points">
+                {profile ? `${profile.points} pts` : "— pts"}
+              </span>
               <button type="button" className="navLink" onClick={logout}>
-                <LogOut size={16} /> Logout
+                <LogOut size={16} aria-hidden /> Logout
               </button>
             </div>
           </div>
-        </div>
+        </header>
       )}
-      <div style={{ paddingTop: showNav ? 72 : 0 }}>{children}</div>
+      <main className={`pageMain${showNav ? " hasNav" : ""}`} id="main-content" tabIndex={-1}>
+        {children}
+      </main>
     </>
   );
 }
-
