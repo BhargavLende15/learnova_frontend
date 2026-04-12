@@ -77,7 +77,8 @@ a {
 }
 
 a:hover {
-  text-decoration: underline;
+  text-decoration: none;
+  color: #f4dc0a;
 }
 
 button {
@@ -380,6 +381,11 @@ textarea {
   background: var(--bg);
 }
 
+.card:hover {
+  transform: translateY(-2px);
+  transition: 0.2s ease;
+}
+
 .btn {
   display: inline-flex;
   align-items: center;
@@ -557,6 +563,10 @@ select.input {
   background: rgba(0, 0, 0, 0.12);
 }
 
+.practiceRow:hover .btn {
+  opacity: 1;
+}
+
 .practiceRow:last-child {
   border-bottom: none;
 }
@@ -628,6 +638,9 @@ select.input {
   gap: 0.4rem;
 }
 
+.practiceCell .btn {
+  opacity: 1 !important;
+}
 .practiceRow.isLocked {
   opacity: 0.72;
 }

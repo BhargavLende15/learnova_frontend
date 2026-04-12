@@ -16,22 +16,33 @@ export default function DashboardPage() {
   const [saving, setSaving] = useState(false);
   const [userId, setUserId] = useState("");
 
+  // ✅ LOAD USER + DATA
   useEffect(() => {
-    const uid = localStorage.getItem("learnova_user_id");
+    const uid =
+      typeof window !== "undefined"
+        ? localStorage.getItem("learnova_user_id")
+        : null;
+
     if (!uid) {
       router.replace("/");
       return;
     }
+
     setUserId(uid);
+
     (async () => {
       try {
         const g = await api.goals();
         setGoals(g.goals || []);
+
         const prefs = await api.getGoalSkills(uid);
-        if (prefs.career_goal) {
+
+        if (prefs?.career_goal) {
           setGoal(prefs.career_goal);
+
           const sk = await api.skills(prefs.career_goal);
           setSkills(sk.skills || []);
+
           setSelected(new Set(prefs.selected_skills || []));
         }
       } catch {
@@ -42,11 +53,13 @@ export default function DashboardPage() {
     })();
   }, [router]);
 
+  // ✅ LOAD SKILLS ON GOAL CHANGE
   useEffect(() => {
     if (!goal) {
       setSkills([]);
       return;
     }
+
     (async () => {
       try {
         const sk = await api.skills(goal);
@@ -67,20 +80,27 @@ export default function DashboardPage() {
     });
   }
 
+  // ✅ FIXED SAVE FUNCTION (IMPORTANT)
   async function save() {
     if (!userId || !goal || selected.size === 0) {
       setError("Pick a goal and at least one skill.");
       return;
     }
+
     setSaving(true);
     setError("");
+
     try {
       await api.saveGoalSkills({
-        user_id: userId,
+        userId: userId, // ✅ frontend key
         career_goal: goal,
         selected_skills: Array.from(selected),
       });
-      router.push("/assessment");
+
+      // ✅ optional UI update trigger
+      window.dispatchEvent(new Event("learnova:profile-updated"));
+
+      router.push("/assessment"); // ⚠️ ensure route exists
     } catch (e) {
       setError(e instanceof Error ? e.message : "Save failed");
     } finally {
@@ -88,16 +108,10 @@ export default function DashboardPage() {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="container">
-        <p style={{ color: "var(--muted)" }}>Loading…</p>
-      </div>
-    );
-  }
-
   return (
     <div className="container stack">
+      <header className="row" style={{ justifyContent: "space-between" }}>
+        <h1 style={{ margin: 0 }}>Goal & skills</h1>
       <header className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
         <h1 className="pageTitle">Goal & skills</h1>
         <Link href="/" className="btn btn-ghost">
@@ -107,13 +121,18 @@ export default function DashboardPage() {
 
       <div className="card stack">
         <p style={{ color: "var(--muted)", margin: 0 }}>
-          Choose your career goal and the skills to assess. Only catalog options are allowed (no free
-          text).
+          Choose your career goal and the skills to assess. Only catalog options
+          are allowed (no free text).
         </p>
 
+        {/* GOAL SELECT */}
         <div>
           <label className="label">Career goal</label>
-          <select className="input" value={goal} onChange={(e) => setGoal(e.target.value)}>
+          <select
+            className="input"
+            value={goal}
+            onChange={(e) => setGoal(e.target.value)}
+          >
             <option value="">Select…</option>
             {goals.map((g) => (
               <option key={g} value={g}>
@@ -123,12 +142,17 @@ export default function DashboardPage() {
           </select>
         </div>
 
+        {/* SKILLS */}
         {goal && (
           <div>
             <label className="label">Skills (multi-select)</label>
             <div className="stack" style={{ gap: "0.4rem" }}>
               {skills.map((s) => (
-                <label key={s} className="row" style={{ cursor: "pointer" }}>
+                <label
+                  key={s}
+                  className="row"
+                  style={{ cursor: "pointer" }}
+                >
                   <input
                     type="checkbox"
                     checked={selected.has(s)}
@@ -141,12 +165,20 @@ export default function DashboardPage() {
           </div>
         )}
 
+        {/* ERROR */}
         {error && <p className="error">{error}</p>}
 
+        {/* ACTIONS */}
         <div className="row">
-          <button className="btn" type="button" onClick={save} disabled={saving}>
+          <button
+            className="btn"
+            type="button"
+            onClick={save}
+            disabled={saving}
+          >
             {saving ? "Saving…" : "Save & start assessment"}
           </button>
+
           <Link href="/roadmap" className="btn btn-ghost">
             Open roadmap
           </Link>
