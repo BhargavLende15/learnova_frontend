@@ -7,6 +7,7 @@ import { Award, Flame, Layers, LayoutDashboard, ListChecks, LogOut, Map, User } 
 import { Toaster } from "react-hot-toast";
 
 import { api } from "@/lib/api";
+import { MentorChat } from "@/components/MentorChat";
 import { ThemeToggle, applyTheme } from "@/components/ThemeToggle";
 
 type Profile = {
@@ -199,6 +200,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <main className="mainScroll">{children}</main>
             </div>
           </div>
+          <MentorChat />
         </div>
       ) : (
         <div className="landingWrap">

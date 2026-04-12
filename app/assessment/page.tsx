@@ -11,6 +11,8 @@ type Question = {
   question: string;
   options: string[];
   difficulty_tier: number;
+  difficulty_label?: string;
+  topic?: string;
 };
 
 export default function AssessmentPage() {
@@ -20,6 +22,7 @@ export default function AssessmentPage() {
   const [question, setQuestion] = useState<Question | null>(null);
   const [done, setDone] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [lastExplanation, setLastExplanation] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [summary, setSummary] = useState<Record<string, unknown> | null>(null);
@@ -40,6 +43,7 @@ export default function AssessmentPage() {
     setSummary(null);
     setDone(false);
     setQuestion(null);
+    setLastExplanation(null);
     try {
       const now = Date.now();
       setStartedAt(now);
@@ -48,12 +52,13 @@ export default function AssessmentPage() {
       if (r.session_id) setSessionId(r.session_id);
       if (r.done) {
         setDone(true);
-        setFeedback(r.message || "No questions.");
+        setFeedback(r.message || "No questions were available.");
         return;
       }
       setQuestion(r.question);
+      setFeedback("Questions are generated for you each session — work carefully; distractors are meant to be realistic.");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Start failed");
+      setError(e instanceof Error ? e.message : "We could not start the assessment. Is the API running?");
     } finally {
       setLoading(false);
     }
@@ -64,13 +69,21 @@ export default function AssessmentPage() {
     setError("");
     setLoading(true);
     setFeedback(null);
+    setLastExplanation(null);
     try {
       const r = await api.assessmentAnswer(sessionId, question.question_id, opt);
       if (r.error) {
         setError(String(r.error));
         return;
       }
-      setFeedback(r.correct ? "Correct — difficulty may increase." : "Incorrect — easing difficulty.");
+      setFeedback(
+        r.correct
+          ? "Nice — we will nudge the next item toward a harder tier."
+          : "Not quite — the next question may ease slightly so you can consolidate."
+      );
+      if (r.explanation && typeof r.explanation === "string") {
+        setLastExplanation(r.explanation);
+      }
       const n = r.next;
       if (n?.done) {
         setDone(true);
@@ -95,7 +108,7 @@ export default function AssessmentPage() {
       setSummary(r);
       setDone(true);
       setQuestion(null);
-      setFeedback("Assessment finalized. Generate your roadmap next.");
+      setFeedback("Assessment saved. You can now generate a roadmap tailored to these levels.");
       const startTs =
         (startedAt ?? Number(localStorage.getItem("learnova_assessment_started_at") || "0")) || 0;
       if (startTs) {
@@ -112,30 +125,33 @@ export default function AssessmentPage() {
   return (
     <div className="container stack">
       <header className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
-        <h1 className="pageTitle">Adaptive assessment</h1>
+        <h1 className="pageTitle">Adaptive skills check</h1>
         <Link href="/dashboard" className="btn btn-ghost">
           Dashboard
         </Link>
       </header>
 
       <div className="card stack">
-        <p style={{ color: "var(--muted)", margin: 0 }}>
-          Questions adapt in real time: correct answers tend to raise difficulty; wrong answers lower
-          it. Finish when prompted, then finalize to record skill levels.
+        <p style={{ color: "var(--muted)", margin: 0, lineHeight: 1.55 }}>
+          Each question is generated for your selected skills (with AI when configured on the server, otherwise a smart fallback).
+          Four options always belong to the topic; difficulty shifts based on how you answer. When you finish the run, finalize to
+          lock in skill levels for your roadmap.
         </p>
 
         {!sessionId && (
           <button className="btn" type="button" onClick={start} disabled={loading || !userId}>
-            {loading ? "…" : "Start assessment"}
+            {loading ? "Starting…" : "Begin assessment"}
           </button>
         )}
 
         {sessionId && question && (
           <div className="stack">
             <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.9rem" }}>
-              {question.skill} · tier {question.difficulty_tier}
+              {question.skill}
+              {question.topic && question.topic !== question.skill ? ` · ${question.topic}` : ""} ·{" "}
+              {question.difficulty_label || `Tier ${question.difficulty_tier}`}
             </p>
-            <p style={{ margin: 0, fontSize: "1.05rem" }}>{question.question}</p>
+            <p style={{ margin: 0, fontSize: "1.08rem", fontWeight: 600, lineHeight: 1.45 }}>{question.question}</p>
             <div className="stack" style={{ gap: "0.5rem" }}>
               {question.options.map((o) => (
                 <button
@@ -155,24 +171,30 @@ export default function AssessmentPage() {
 
         {sessionId && done && !question && !summary && (
           <button className="btn" type="button" onClick={finalize} disabled={loading}>
-            Finalize assessment
+            {loading ? "Saving…" : "Finalize & save results"}
           </button>
         )}
 
         {feedback && <p style={{ color: "var(--success)", margin: 0 }}>{feedback}</p>}
+        {lastExplanation && (
+          <div className="card-inset" style={{ padding: "0.85rem 1rem" }}>
+            <div style={{ fontSize: "0.72rem", fontWeight: 800, letterSpacing: "0.08em", color: "var(--muted)" }}>
+              EXPLANATION
+            </div>
+            <p style={{ margin: "0.35rem 0 0", fontSize: "0.92rem", lineHeight: 1.5 }}>{lastExplanation}</p>
+          </div>
+        )}
         {error && <p className="error">{error}</p>}
 
         {summary && (
           <div className="stack">
-            <h3 style={{ margin: 0 }}>Results</h3>
-            <pre className="preNeo">
-              {JSON.stringify(summary.skill_levels, null, 2)}
-            </pre>
+            <h3 style={{ margin: 0 }}>Your skill snapshot</h3>
+            <pre className="preNeo">{JSON.stringify(summary.skill_levels, null, 2)}</pre>
             <Link className="btn" href="/roadmap">
-              Generate / view roadmap
+              Open roadmap
             </Link>
             <Link className="btn btn-ghost" href="/results">
-              Open results dashboard
+              View results dashboard
             </Link>
           </div>
         )}

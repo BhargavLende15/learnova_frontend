@@ -11,7 +11,7 @@ type TopicStat = {
   topicName: string;
   accuracyPct: number;
   attempts: number;
-  masteryLevel: "Weak" | "متوسط" | "Strong" | string;
+  masteryLevel: "Weak" | "Moderate" | "Strong" | string;
 };
 
 function chunk<T>(arr: T[], size: number) {
@@ -68,15 +68,16 @@ export default function SkillMapPage() {
   return (
     <div className="container stack">
       <header className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
-        <h1 className="pageTitle">Skill map</h1>
+        <h1 className="pageTitle">Skill heat map</h1>
         <Link href="/results" className="btn btn-ghost">
           Results
         </Link>
       </header>
 
       <div className="card stack">
-        <p style={{ margin: 0, color: "var(--muted)" }}>
-          Each block is a topic. Color intensity reflects mastery (red → weak, yellow → متوسط, green → strong).
+        <p style={{ margin: 0, color: "var(--muted)", lineHeight: 1.55 }}>
+          Each tile is a roadmap topic. Color intensity reflects how confidently you have practiced it (cooler = needs attention,
+          warmer = stronger).
         </p>
 
         {loading && <p style={{ color: "var(--muted)", margin: 0 }}>Loading…</p>}

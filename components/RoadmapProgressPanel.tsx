@@ -26,14 +26,14 @@ export function RoadmapProgressPanel({ careerGoal, phases, topicsTotal, topicsCo
       <div className="row" style={{ justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1rem" }}>
         <div>
           <h2 className="pageTitle" style={{ fontSize: "1.2rem", marginBottom: "0.35rem" }}>
-            Your roadmap progress
+            Progress overview
           </h2>
-          <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.92rem", maxWidth: 520 }}>
-            Topics you have finished versus your full learning path
+          <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.92rem", maxWidth: 560 }}>
+            Completed roadmap topics compared with everything in your path
             {careerGoal ? (
               <>
                 {" "}
-                for <strong style={{ color: "var(--text)" }}>{careerGoal}</strong>.
+                toward <strong style={{ color: "var(--text)" }}>{careerGoal}</strong>.
               </>
             ) : (
               "."
@@ -94,7 +94,7 @@ export function RoadmapProgressPanel({ careerGoal, phases, topicsTotal, topicsCo
             <span className="roadmapStatValue">{phaseCount}</span>
           </div>
           <div className="roadmapStatCard">
-            <span className="roadmapStatLabel">Est. timeline</span>
+            <span className="roadmapStatLabel">Planned weeks</span>
             <span className="roadmapStatValue">~{totalWeeks} wk</span>
           </div>
         </div>

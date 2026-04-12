@@ -35,7 +35,7 @@ export default function DashboardPage() {
           setSelected(new Set(prefs.selected_skills || []));
         }
       } catch {
-        setError("Could not load catalog. Is the API running?");
+        setError("We could not reach the catalog. Confirm the Learnova API is running and try again.");
       } finally {
         setLoading(false);
       }
@@ -69,7 +69,7 @@ export default function DashboardPage() {
 
   async function save() {
     if (!userId || !goal || selected.size === 0) {
-      setError("Pick a goal and at least one skill.");
+      setError("Choose a career goal and at least one skill to continue.");
       return;
     }
     setSaving(true);
@@ -90,8 +90,10 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="container">
-        <p style={{ color: "var(--muted)" }}>Loading…</p>
+      <div className="container stack" style={{ gap: "0.75rem" }}>
+        <div className="skeletonLine" style={{ maxWidth: 280 }} />
+        <div className="skeletonLine" style={{ maxWidth: "100%" }} />
+        <div className="skeletonLine" style={{ maxWidth: "85%" }} />
       </div>
     );
   }
@@ -99,22 +101,22 @@ export default function DashboardPage() {
   return (
     <div className="container stack">
       <header className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
-        <h1 className="pageTitle">Goal & skills</h1>
+        <h1 className="pageTitle">Your learning profile</h1>
         <Link href="/" className="btn btn-ghost">
           Home
         </Link>
       </header>
 
       <div className="card stack">
-        <p style={{ color: "var(--muted)", margin: 0 }}>
-          Choose your career goal and the skills to assess. Only catalog options are allowed (no free
-          text).
+        <p style={{ color: "var(--muted)", margin: 0, lineHeight: 1.55 }}>
+          Tell Learnova which role you are pursuing and which catalog skills to measure. We use this profile to generate assessment
+          questions and your multi-phase roadmap — pick honestly so difficulty and pacing match you.
         </p>
 
         <div>
           <label className="label">Career goal</label>
           <select className="input" value={goal} onChange={(e) => setGoal(e.target.value)}>
-            <option value="">Select…</option>
+            <option value="">Choose a goal…</option>
             {goals.map((g) => (
               <option key={g} value={g}>
                 {g}
@@ -125,7 +127,7 @@ export default function DashboardPage() {
 
         {goal && (
           <div>
-            <label className="label">Skills (multi-select)</label>
+            <label className="label">Skills to assess</label>
             <div className="stack" style={{ gap: "0.4rem" }}>
               {skills.map((s) => (
                 <label key={s} className="row" style={{ cursor: "pointer" }}>
@@ -145,10 +147,10 @@ export default function DashboardPage() {
 
         <div className="row">
           <button className="btn" type="button" onClick={save} disabled={saving}>
-            {saving ? "Saving…" : "Save & start assessment"}
+            {saving ? "Saving…" : "Save & go to assessment"}
           </button>
           <Link href="/roadmap" className="btn btn-ghost">
-            Open roadmap
+            View roadmap
           </Link>
         </div>
       </div>

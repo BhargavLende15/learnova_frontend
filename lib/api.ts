@@ -64,4 +64,10 @@ export const api = {
   dailyLogin: (userId: string) => unwrap<AnyApi>(http.post("/api/daily-login", { userId })),
   completeTopic: (userId: string, topicId: string) => unwrap<AnyApi>(http.post("/api/complete-topic", { userId, topicId })),
   profile: (userId: string) => unwrap<AnyApi>(http.get(`/api/profile/${encodeURIComponent(userId)}`)),
+
+  mentorChat: (userId: string, message: string) =>
+    unwrap<AnyApi>(http.post("/mentor/chat", { user_id: userId, message })),
+
+  generateResourcePack: (topic_name: string) =>
+    unwrap<AnyApi>(http.post("/generate-resources", { topic_name })),
 };
