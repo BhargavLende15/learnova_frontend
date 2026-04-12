@@ -14,8 +14,9 @@ const dmSans = DM_Sans({
 const themeInitScript = `(function(){try{var t=localStorage.getItem('learnova_theme');document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light');}catch(e){document.documentElement.setAttribute('data-theme','light');}})();`;
 
 export const metadata: Metadata = {
-  title: "Learnova",
-  description: "Adaptive learning platform",
+  title: "Learnova — AI-personalized learning",
+  description:
+    "Goal-based roadmaps, adaptive assessments, weekly milestones, curated resources, and an embedded coach for serious self-directed learners.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

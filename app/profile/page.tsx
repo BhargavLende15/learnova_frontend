@@ -78,13 +78,18 @@ export default function ProfilePage() {
           </Link>
         </div>
       <header className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
-        <h1 className="pageTitle">Profile</h1>
+        <h1 className="pageTitle">Your profile</h1>
         <Link href="/dashboard" className="btn btn-ghost">
           Dashboard
         </Link>
       </header>
 
-      {loading && <p style={{ color: "var(--muted)", margin: 0 }}>Loading…</p>}
+      {loading && (
+        <div className="stack" style={{ gap: "0.65rem" }}>
+          <div className="skeletonLine" style={{ maxWidth: 320 }} />
+          <div className="skeletonLine" />
+        </div>
+      )}
       {error && <p className="error">{error}</p>}
 
       {!loading && !error && p && (
@@ -104,10 +109,8 @@ export default function ProfilePage() {
           <motion.div className="card stack" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
             <div className="row" style={{ justifyContent: "space-between" }}>
               <div>
-                <div style={{ color: "var(--muted)", fontSize: "0.85rem" }}>Total Points</div>
-               <div style={{ fontWeight: 700, fontSize: "2.2rem" }}>
-                  {p.points}
-                </div>
+                <div style={{ color: "var(--muted)", fontSize: "0.85rem" }}>Total points</div>
+                <div style={{ fontWeight: 1100, fontSize: "2.4rem", marginTop: 4 }}>{p.points}</div>
               </div>
               <Trophy />
             </div>
@@ -117,10 +120,8 @@ export default function ProfilePage() {
             
             <div className="row" style={{ justifyContent: "space-between" }}>
               <div>
-                <div style={{ color: "var(--muted)", fontSize: "0.85rem" }}>Current streak</div>
-                <div style={{ fontWeight: 600, fontSize: "1.8rem" }}>
-                  {p.streak} days
-                </div>
+                <div style={{ color: "var(--muted)", fontSize: "0.85rem" }}>Login streak</div>
+                <div style={{ fontWeight: 1100, fontSize: "2.0rem", marginTop: 4 }}>{p.streak} days</div>
               </div>
               <Flame />
             </div>
@@ -128,7 +129,7 @@ export default function ProfilePage() {
 
           <motion.div className="card stack" style={{ gridColumn: "1 / -1" }} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
             <div className="row" style={{ justifyContent: "space-between", alignItems: "baseline" }}>
-              <h2 style={{ margin: 0, fontSize: "1.1rem" }}>Progress</h2>
+              <h2 style={{ margin: 0, fontSize: "1.1rem" }}>Topic progress</h2>
               <span style={{ color: "var(--muted)", fontWeight: 800 }}>
                 {progress.done} / {progress.total} topics completed
               </span>
@@ -153,9 +154,9 @@ export default function ProfilePage() {
           </motion.div>
 
           <motion.div className="card stack" style={{ gridColumn: "1 / -1" }} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-            <h2 style={{ margin: 0, fontSize: "1.1rem" }}>Recent activity</h2>
+            <h2 style={{ margin: 0, fontSize: "1.1rem" }}>Recent completions</h2>
             {(p.recentCompletedTopics || []).length === 0 ? (
-              <p style={{ margin: 0, color: "var(--muted)" }}>No completed topics yet.</p>
+              <p style={{ margin: 0, color: "var(--muted)" }}>Complete a roadmap topic to see it listed here.</p>
             ) : (
               <div className="stack" style={{ gap: "0.5rem" }}>
                 {p.recentCompletedTopics.map((id) => (

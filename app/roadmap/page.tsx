@@ -9,10 +9,26 @@ import { PracticeSessionPanel } from "@/components/PracticeSessionPanel";
 import { RoadmapProgressPanel } from "@/components/RoadmapProgressPanel";
 import toast from "react-hot-toast";
 
+type WeekPlan = {
+  week: number;
+  title?: string;
+  focus_skill?: string;
+  topics?: string[];
+  subtopics?: string[];
+  practice_tasks?: string[];
+  mini_projects?: string[];
+  revision_goals?: string[];
+  useful_resources?: string[];
+  milestone?: string;
+  estimated_effort_hours?: number;
+};
+
 type Phase = {
   name: string;
   description?: string;
   timeline_weeks: number;
+  timeline_rationale?: string;
+  weekly_breakdown?: WeekPlan[];
   topics: { id: string; title: string; skill?: string; suggested_skip?: boolean }[];
   mini_projects?: { id: string; title: string; skill?: string }[];
 };
@@ -39,7 +55,7 @@ export default function RoadmapPage() {
       setRoadmap(r.roadmap);
     } catch {
       setRoadmap(null);
-      setError("No roadmap yet — generate after assessment.");
+      setError("No roadmap yet — finish your assessment, then generate a roadmap from this page.");
     } finally {
       setLoading(false);
     }
@@ -148,7 +164,7 @@ export default function RoadmapPage() {
           </Link>
         </div>
       <header className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
-        <h1 className="pageTitle">Learning roadmap</h1>
+        <h1 className="pageTitle">Your learning roadmap</h1>
         <Link href="/assessment" className="btn btn-ghost">
           Assessment
         </Link>
@@ -157,13 +173,19 @@ export default function RoadmapPage() {
       <div className="row" style={{ alignItems: "stretch", gap: "0.75rem" }}>
         <div className="searchBarNeo" style={{ flex: 1, minWidth: 0 }}>
           <Search size={18} color="var(--muted)" aria-hidden />
-          <input type="search" placeholder="Search topics in your roadmap…" value={filterQ} onChange={(e) => setFilterQ(e.target.value)} aria-label="Search topics" />
+          <input
+            type="search"
+            placeholder="Filter topics by keyword…"
+            value={filterQ}
+            onChange={(e) => setFilterQ(e.target.value)}
+            aria-label="Search topics"
+          />
         </div>
         <button className="btn btn-ghost" type="button" onClick={load} disabled={loading} title="Reload roadmap">
           <RefreshCw size={18} />
         </button>
         <button className="btn" type="button" onClick={generate} disabled={loading}>
-          {loading ? "…" : "Refresh roadmap"}
+          {loading ? "…" : "Regenerate roadmap"}
         </button>
         <button
           type="button"
@@ -200,12 +222,67 @@ export default function RoadmapPage() {
           )}
 
           <div className="card stack">
-            <h2 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 800 }}>Timeline</h2>
-            <div className="row" style={{ alignItems: "stretch" }}>
+            <h2 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 800 }}>Timeline & weekly cadence</h2>
+            <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.92rem", maxWidth: 720 }}>
+              Phases are sized like a focused part-time program: each week mixes theory, practice, a small build, and revision so
+              the total duration reflects real depth — not an arbitrary deadline.
+            </p>
+            <div className="stack" style={{ gap: "1.25rem" }}>
               {(roadmap.phases || []).map((ph) => (
-                <div key={ph.name} className="card" style={{ flex: "1 1 200px", minWidth: 180, padding: "1rem 1.15rem" }}>
-                  <strong>{ph.name}</strong>
-                  <div style={{ color: "var(--muted)", fontSize: "0.85rem", marginTop: 6 }}>~{ph.timeline_weeks} weeks</div>
+                <div key={ph.name} className="card-inset stack" style={{ padding: "1.1rem 1.2rem" }}>
+                  <div className="row" style={{ justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap" }}>
+                    <strong style={{ fontSize: "1.05rem" }}>{ph.name}</strong>
+                    <span style={{ color: "var(--muted)", fontSize: "0.85rem", fontWeight: 700 }}>~{ph.timeline_weeks} weeks</span>
+                  </div>
+                  {ph.description && (
+                    <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.88rem" }}>{ph.description}</p>
+                  )}
+                  {ph.timeline_rationale && (
+                    <p style={{ margin: 0, fontSize: "0.85rem", lineHeight: 1.5 }}>{ph.timeline_rationale}</p>
+                  )}
+                  {ph.weekly_breakdown && ph.weekly_breakdown.length > 0 && (
+                    <div className="stack" style={{ gap: "0.85rem", marginTop: "0.35rem" }}>
+                      {ph.weekly_breakdown.map((w) => (
+                        <div key={`${ph.name}-w${w.week}`} className="weekPlanCard">
+                          <div className="weekPlanHead">
+                            <span className="weekPlanBadge">Week {w.week}</span>
+                            <span className="weekPlanTitle">{w.title || `${ph.name} focus`}</span>
+                            {typeof w.estimated_effort_hours === "number" && (
+                              <span className="weekPlanHours">≈{w.estimated_effort_hours}h</span>
+                            )}
+                          </div>
+                          {w.milestone && <p className="weekPlanMilestone">{w.milestone}</p>}
+                          <ul className="weekPlanList">
+                            {(w.subtopics || []).slice(0, 6).map((s) => (
+                              <li key={s}>
+                                <strong>Subtopic:</strong> {s}
+                              </li>
+                            ))}
+                            {(w.practice_tasks || []).map((s) => (
+                              <li key={s}>
+                                <strong>Practice:</strong> {s}
+                              </li>
+                            ))}
+                            {(w.mini_projects || []).map((s) => (
+                              <li key={s}>
+                                <strong>Mini project:</strong> {s}
+                              </li>
+                            ))}
+                            {(w.revision_goals || []).map((s) => (
+                              <li key={s}>
+                                <strong>Revision:</strong> {s}
+                              </li>
+                            ))}
+                            {(w.useful_resources || []).map((s) => (
+                              <li key={s}>
+                                <strong>Resources:</strong> {s}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

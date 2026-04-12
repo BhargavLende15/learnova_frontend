@@ -167,13 +167,18 @@ export default function ResultsPage() {
   return (
     <div className="container stack">
       <header className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
-        <h1 className="pageTitle">Results</h1>
+        <h1 className="pageTitle">Assessment insights</h1>
         <Link href="/roadmap" className="btn btn-ghost">
           Roadmap
         </Link>
       </header>
 
-      {loading && <p style={{ color: "var(--muted)", margin: 0 }}>Loading…</p>}
+      {loading && (
+        <div className="stack" style={{ gap: "0.65rem" }}>
+          <div className="skeletonLine" />
+          <div className="skeletonLine" style={{ maxWidth: "70%" }} />
+        </div>
+      )}
       {error && <p className="error">{error}</p>}
 
       {!loading && !error && result && (
@@ -186,7 +191,7 @@ export default function ResultsPage() {
             style={{ textAlign: "center" }}
           >
             <div style={{ color: "var(--muted)", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>
-              Score
+              Overall signal
             </div>
             <div style={{ fontSize: "3.2rem", fontWeight: 1000, marginTop: 8 }}>
               {Math.round(metrics.marks)}

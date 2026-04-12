@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { BookOpen, Map, Sparkles, Target } from "lucide-react";
 import { api } from "@/lib/api";
 
 export default function HomePage() {
@@ -45,22 +46,64 @@ export default function HomePage() {
       }
       router.push("/dashboard");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Request failed");
+      setError(err instanceof Error ? err.message : "Something went wrong. Try again.");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="container stack" style={{ paddingTop: "1rem", paddingBottom: "2rem" }}>
-      <header className="row" style={{ justifyContent: "space-between", alignItems: "baseline" }}>
-        <div>
-          <h1 className="pageTitle" style={{ fontSize: "1.85rem" }}>
-            Learnova
+    <div className="container stack" style={{ paddingTop: "1rem", paddingBottom: "2.5rem" }}>
+      <section className="stack" style={{ gap: "1.5rem" }}>
+        <header className="stack" style={{ gap: "0.75rem", maxWidth: 720 }}>
+          <h1 className="pageTitle" style={{ fontSize: "clamp(1.85rem, 4vw, 2.35rem)", lineHeight: 1.15 }}>
+            Learn smarter with a roadmap built around you
           </h1>
-          <p style={{ margin: "0.35rem 0 0", color: "var(--muted)", fontWeight: 600 }}>Adaptive learning</p>
+          <p style={{ margin: 0, color: "var(--muted)", fontSize: "1.05rem", lineHeight: 1.6, fontWeight: 500 }}>
+            Learnova turns your career goal and skills into an adaptive assessment, a phased learning plan with weekly milestones,
+            guided practice, and an in-app coach — so you always know what to do next.
+          </p>
+        </header>
+
+        <div
+          className="row"
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+            gap: "1rem",
+            width: "100%",
+          }}
+        >
+          <div className="card stack" style={{ padding: "1.1rem 1.2rem" }}>
+            <Target size={22} color="var(--accent)" aria-hidden />
+            <strong style={{ fontSize: "0.95rem" }}>Personalized path</strong>
+            <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.88rem", lineHeight: 1.5 }}>
+              Pick a role-aligned goal and skills — we assess where you are and sequence what matters.
+            </p>
+          </div>
+          <div className="card stack" style={{ padding: "1.1rem 1.2rem" }}>
+            <Sparkles size={22} color="var(--accent)" aria-hidden />
+            <strong style={{ fontSize: "0.95rem" }}>Fresh assessment items</strong>
+            <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.88rem", lineHeight: 1.5 }}>
+              Questions are generated per session with realistic distractors — not recycled trivia.
+            </p>
+          </div>
+          <div className="card stack" style={{ padding: "1.1rem 1.2rem" }}>
+            <Map size={22} color="var(--accent)" aria-hidden />
+            <strong style={{ fontSize: "0.95rem" }}>Roadmap you can execute</strong>
+            <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.88rem", lineHeight: 1.5 }}>
+              Weeks include topics, practice, mini-projects, revision, and milestones you can actually ship.
+            </p>
+          </div>
+          <div className="card stack" style={{ padding: "1.1rem 1.2rem" }}>
+            <BookOpen size={22} color="var(--accent)" aria-hidden />
+            <strong style={{ fontSize: "0.95rem" }}>Coach on demand</strong>
+            <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.88rem", lineHeight: 1.5 }}>
+              After sign-in, open Learnova Coach anytime for career context, motivation, and concept help.
+            </p>
+          </div>
         </div>
-      </header>
+      </section>
 
       <div className="card stack" style={{ maxWidth: 440 }}>
         <div className="row">
@@ -69,14 +112,14 @@ export default function HomePage() {
             className={mode === "login" ? "btn" : "btn btn-ghost"}
             onClick={() => setMode("login")}
           >
-            Login
+            Sign in
           </button>
           <button
             type="button"
             className={mode === "register" ? "btn" : "btn btn-ghost"}
             onClick={() => setMode("register")}
           >
-            Register
+            Create account
           </button>
         </div>
 
@@ -117,18 +160,17 @@ export default function HomePage() {
           </div>
           {error && <p className="error">{error}</p>}
           <button className="btn" type="submit" disabled={loading}>
-            {loading ? "…" : mode === "login" ? "Sign in" : "Create account"}
+            {loading ? "Please wait…" : mode === "login" ? "Continue" : "Create account & continue"}
           </button>
         </form>
 
-        <p style={{ color: "var(--muted)", fontSize: "0.9rem", margin: 0 }}>
-          After login: choose a career goal and skills, take the adaptive assessment, then open your
-          roadmap.
+        <p style={{ color: "var(--muted)", fontSize: "0.88rem", margin: 0, lineHeight: 1.5 }}>
+          Flow: set goal & skills → adaptive check → roadmap with weekly detail → practice with curated resources → track progress.
         </p>
       </div>
 
-      <p style={{ color: "var(--muted)", fontSize: "0.85rem" }}>
-        <Link href="/dashboard">Continue to dashboard</Link> (requires session in this browser)
+      <p style={{ color: "var(--muted)", fontSize: "0.85rem", margin: 0 }}>
+        <Link href="/dashboard">Go to dashboard</Link> — requires an active session in this browser.
       </p>
     </div>
   );
