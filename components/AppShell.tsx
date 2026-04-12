@@ -36,6 +36,12 @@ const navItems = [
   { href: "/profile", label: "Profile", icon: User },
 ] as const;
 
+const LANDING_STYLE_PATHS = new Set(["/", "/login"]);
+
+function isLandingStylePath(pathname: string) {
+  return LANDING_STYLE_PATHS.has(pathname || "");
+}
+
 function segmentLabel(pathname: string) {
   if (pathname === "/" || pathname === "") return "Home";
   const seg = pathname.replace(/^\//, "").split("/")[0];
@@ -70,7 +76,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
     if (!uid) {
       setProfile(null);
-      if (pathname !== "/") {
+      if (!isLandingStylePath(pathname || "")) {
         localStorage.clear();
         router.replace("/");
       }
@@ -92,10 +98,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         });
       } catch {
         setProfile(null);
-        if (pathname !== "/") {
-          localStorage.removeItem("token");
-          localStorage.removeItem("learnova_token");
-          localStorage.removeItem("learnova_user_id");
+        localStorage.removeItem("token");
+        localStorage.removeItem("learnova_token");
+        localStorage.removeItem("learnova_user_id");
+        localStorage.removeItem("learnova_name");
+        if (!isLandingStylePath(pathname || "")) {
           router.replace("/");
         }
       }
@@ -125,7 +132,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("learnova:profile-updated", onUpdate as EventListener);
   }, []);
 
-  const showAppChrome = pathname !== "/";
+  const showAppChrome = !isLandingStylePath(pathname || "");
   const crumb = useMemo(() => segmentLabel(pathname || ""), [pathname]);
 
   const initials = useMemo(() => {
