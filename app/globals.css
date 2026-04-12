@@ -96,7 +96,8 @@ a {
 }
 
 a:hover {
-  text-decoration: underline;
+  text-decoration: none;
+  color: #f4dc0a;
 }
 
 button {
@@ -115,6 +116,11 @@ select {
   border-radius: 12px;
   padding: 1.25rem 1.5rem;
   backdrop-filter: blur(10px);
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  transition: 0.2s ease;
 }
 
 .btn {
@@ -270,6 +276,10 @@ select {
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+.practiceRow:hover .btn {
+  opacity: 1;
+}
+
 .practiceRow:last-child {
   border-bottom: none;
 }
@@ -282,6 +292,9 @@ select {
   gap: 0.35rem;
 }
 
+.practiceCell .btn {
+  opacity: 1 !important;
+}
 .practiceRow.isLocked {
   filter: blur(0.2px);
 }

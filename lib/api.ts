@@ -1,67 +1,195 @@
+"use client";
+
 import { http } from "@/services/http";
 
-async function unwrap<T>(p: Promise<{ data: T }>): Promise<T> {
+// ✅ Generic API response wrapper
+type ApiResponse<T> = {
+  data: T;
+};
+
+// ✅ Common error handler
+async function unwrap<T>(promise: Promise<ApiResponse<T>>): Promise<T> {
   try {
-    const r = await p;
-    return r.data;
+    const res = await promise;
+    return res.data;
   } catch (e: any) {
     const detail =
       e?.response?.data?.detail ||
       e?.response?.data?.message ||
       e?.message ||
-      "Request failed";
-    throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+      "Something went wrong";
+
+    throw new Error(
+      typeof detail === "string" ? detail : JSON.stringify(detail)
+    );
   }
 }
 
-type AnyApi = any;
+// ✅ Types
+type AuthResponse = {
+  token?: string;
+  user?: any;
+};
+
+type RoadmapResponse = any;
+type AssessmentResponse = any;
+type NotesResponse = { notes: string };
 
 export const api = {
+  // 🔐 AUTH
   register: (data: { name: string; email: string; password: string }) =>
-    unwrap<AnyApi>(http.post("/api/auth/register", data)),
+    unwrap<AuthResponse>(http.post("/api/auth/register", data)),
+
   login: (email: string, password: string) =>
-    unwrap<AnyApi>(http.post("/api/auth/login", { email, password })),
-  me: () => unwrap<AnyApi>(http.get("/api/auth/me")),
-  goals: () => unwrap<AnyApi>(http.get("/catalog/goals")),
+    unwrap<AuthResponse>(
+      http.post("/api/auth/login", { email, password })
+    ),
+
+  me: () => unwrap<any>(http.get("/api/auth/me")),
+
+  // 🎯 GOALS & SKILLS
+  goals: () => unwrap<any>(http.get("/catalog/goals")),
+
   skills: (goal: string) =>
-    unwrap<AnyApi>(http.get(`/catalog/skills/${encodeURIComponent(goal)}`)),
-  saveGoalSkills: (data: { user_id: string; career_goal: string; selected_skills: string[] }) =>
-    unwrap<AnyApi>(http.post("/user/goal-skills", data)),
-  getGoalSkills: (userId: string) => unwrap<AnyApi>(http.get(`/user/goal-skills/${encodeURIComponent(userId)}`)),
-  assessmentStart: (user_id: string, skills?: string[]) =>
-    unwrap<AnyApi>(http.post("/assessment/start", { user_id, skills: skills ?? null })),
-  assessmentAnswer: (session_id: string, question_id: string, selected_option: string) =>
-    unwrap<AnyApi>(http.post("/assessment/answer", { session_id, question_id, selected_option })),
-  assessmentFinalize: (session_id: string) =>
-    unwrap<AnyApi>(http.post("/assessment/finalize", { session_id })),
+    unwrap<any>(
+      http.get(`/catalog/skills/${encodeURIComponent(goal)}`)
+    ),
+
+  saveGoalSkills: (data: {
+  userId: string;
+  career_goal: string;
+  selected_skills: string[];
+}) =>
+  unwrap<any>(
+    http.post("/user/goal-skills", {
+      user_id: data.userId, // ✅ FIX
+      career_goal: data.career_goal,
+      selected_skills: data.selected_skills,
+    })
+  ),
+
+  getGoalSkills: (userId: string) =>
+    unwrap<any>(
+      http.get(`/user/goal-skills/${encodeURIComponent(userId)}`)
+    ),
+
+  // 🧠 ASSESSMENT
+  assessmentStart: (userId: string, skills?: string[]) =>
+    unwrap<AssessmentResponse>(
+      http.post("/assessment/start", {
+        user_id: userId,
+        skills: skills ?? null,
+      })
+    ),
+
+  assessmentAnswer: (
+    sessionId: string,
+    questionId: string,
+    selectedOption: string
+  ) =>
+    unwrap<AssessmentResponse>(
+      http.post("/assessment/answer", {
+        session_id: sessionId,
+        question_id: questionId,
+        selected_option: selectedOption,
+      })
+    ),
+
+  assessmentFinalize: (sessionId: string) =>
+    unwrap<AssessmentResponse>(
+      http.post("/assessment/finalize", { session_id: sessionId })
+    ),
+
   latestResult: (userId: string) =>
-    unwrap<AnyApi>(http.get(`/assessment/latest-result/${encodeURIComponent(userId)}`)),
+    unwrap<AssessmentResponse>(
+      http.get(
+        `/assessment/latest-result/${encodeURIComponent(userId)}`
+      )
+    ),
+
+  // 🗺️ ROADMAP
   generateRoadmap: (userId: string) =>
-    unwrap<AnyApi>(http.post(`/roadmap/generate/${encodeURIComponent(userId)}`)),
-  getRoadmap: (userId: string) => unwrap<AnyApi>(http.get(`/roadmap/${encodeURIComponent(userId)}`)),
+    unwrap<RoadmapResponse>(
+      http.post(`/roadmap/generate/${encodeURIComponent(userId)}`)
+    ),
+
+  getRoadmap: (userId: string) =>
+    unwrap<RoadmapResponse>(
+      http.get(`/roadmap/${encodeURIComponent(userId)}`)
+    ),
+
+  // 📈 PROGRESS
   progressUpdate: (data: {
-    user_id: string;
-    item_id: string;
-    item_type: "topic" | "project";
+    userId: string;
+    itemId: string;
+    itemType: "topic" | "project";
     completed: boolean;
-    performance_score?: number | null;
-  }) => unwrap<AnyApi>(http.post("/progress/update", data)),
+    performanceScore?: number | null;
+  }) =>
+    unwrap<any>(
+      http.post("/progress/update", {
+        user_id: data.userId,
+        item_id: data.itemId,
+        item_type: data.itemType,
+        completed: data.completed,
+        performance_score: data.performanceScore ?? null,
+      })
+    ),
 
-  getDirectResources: (topic: string) =>
-    unwrap<AnyApi>(http.get(`/api/resources?topic=${encodeURIComponent(topic)}`)),
+  completeTopic: (userId: string, topicId: string) =>
+    unwrap<any>(
+      http.post("/api/complete-topic", { userId, topicId })
+    ),
 
-  saveNotes: (data: { userId: string; topicId: string; notes: string }) =>
-    unwrap<AnyApi>(http.post("/save-notes", data)),
+  // 📝 NOTES
+  saveNotes: (data: {
+    userId: string;
+    topicId: string;
+    notes: string;
+  }) =>
+    unwrap<any>(http.post("/save-notes", data)),
+
   getNotes: (userId: string, topicId: string) =>
-    unwrap<AnyApi>(http.get(`/save-notes?userId=${encodeURIComponent(userId)}&topicId=${encodeURIComponent(topicId)}`)),
-  getSkillMapData: (userId: string) =>
-    unwrap<AnyApi>(http.post("/get-skill-map-data", { userId })),
-  updateGamification: (data: { userId: string; score: number; efficiency: number }) =>
-    unwrap<AnyApi>(http.post("/update-gamification", data)),
-  getGamification: (userId: string) =>
-    unwrap<AnyApi>(http.get(`/update-gamification?userId=${encodeURIComponent(userId)}`)),
+    unwrap<NotesResponse>(
+      http.get(
+        `/save-notes?userId=${encodeURIComponent(
+          userId
+        )}&topicId=${encodeURIComponent(topicId)}`
+      )
+    ),
 
-  dailyLogin: (userId: string) => unwrap<AnyApi>(http.post("/api/daily-login", { userId })),
-  completeTopic: (userId: string, topicId: string) => unwrap<AnyApi>(http.post("/api/complete-topic", { userId, topicId })),
-  profile: (userId: string) => unwrap<AnyApi>(http.get(`/api/profile/${encodeURIComponent(userId)}`)),
+  // 🧩 SKILL MAP
+  getSkillMapData: (userId: string) =>
+    unwrap<any>(
+      http.post("/get-skill-map-data", { userId })
+    ),
+
+  // 🎮 GAMIFICATION
+  updateGamification: (data: {
+    userId: string;
+    score: number;
+    efficiency: number;
+  }) =>
+    unwrap<any>(
+      http.post("/update-gamification", data)
+    ),
+
+  getGamification: (userId: string) =>
+    unwrap<any>(
+      http.get(
+        `/update-gamification?userId=${encodeURIComponent(userId)}`
+      )
+    ),
+
+  // 🔥 DAILY LOGIN
+  dailyLogin: (userId: string) =>
+    unwrap<any>(
+      http.post("/api/daily-login", { userId })
+    ),
+
+  // 👤 PROFILE
+  profile: (userId: string) =>
+    unwrap<any>(
+      http.get(`/api/profile/${encodeURIComponent(userId)}`)
+    ),
 };

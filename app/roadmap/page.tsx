@@ -76,11 +76,11 @@ export default function RoadmapPage() {
         window.dispatchEvent(new Event("learnova:profile-updated"));
       } else {
         const r = await api.progressUpdate({
-          user_id: userId,
-          item_id: itemId,
-          item_type: type,
+          userId: userId,
+          itemId: itemId,
+          itemType: type,
           completed: true,
-          performance_score: null,
+          performanceScore: null,
         });
         setRoadmap(r.roadmap);
       }
@@ -122,7 +122,7 @@ export default function RoadmapPage() {
       <header className="row" style={{ justifyContent: "space-between" }}>
         <h1 style={{ margin: 0 }}>Learning roadmap</h1>
         <div className="row">
-          <Link href="/dashboard" className="btn btn-ghost">
+          <Link href="/profile" className="btn btn-ghost">
             Dashboard
           </Link>
           <Link href="/assessment" className="btn btn-ghost">
@@ -184,7 +184,9 @@ export default function RoadmapPage() {
             topics={allTopics}
             completedIds={completed}
             unlockedTopicIds={unlocked}
-            onMarkDone={async (topicId) => completeItem(topicId, "topic")}
+           onMarkDone={async (topicId: string) =>
+            completeItem(topicId, "topic")
+}
           />
         </div>
       )}
