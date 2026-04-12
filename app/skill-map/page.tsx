@@ -85,134 +85,85 @@ export default function SkillMapPage() {
 
         {!loading && !error && (
           <>
-            {/* 🔥 HEATMAP */}
-            <div style={{ height: 120, width: "100%", marginTop: 10 }}>
+            <div style={{ height: 280, width: "100%", marginTop: 8 }}>
               <ResponsiveHeatMap
                 data={heatmap.data as any}
-                margin={{ top: 16, right: 16, bottom: 16, left: 60 }}
+                margin={{ top: 20, right: 20, bottom: 20, left: 72 }}
                 forceSquare={true}
                 axisTop={null}
                 axisRight={null}
                 axisBottom={null}
                 axisLeft={null}
                 borderWidth={1}
-                borderColor="rgba(255,255,255,0.1)" // ✅ cleaner border
+                borderColor="rgba(128, 140, 160, 0.25)"
                 borderRadius={6}
-                activeOpacity={1}
-                inactiveOpacity={0.3}
-
-               // ✅ ORANGE PROFESSIONAL THEME
-               colors={({ value }: any) => {
-                if (value === null) return "rgba(255,255,255,0.04)";
-
-                if (value < 40) return "#ef4444";   // 🔴 Weak
-                if (value < 70) return "#facc15";   // 🟡 Medium (REAL YELLOW)
-                return "#22c55e";                   // 🟢 Strong
-              }}
-
-                emptyColor="rgba(255,255,255,0.04)"
+                inactiveOpacity={0.35}
+                colors={({ value }: { value: number | null }) => {
+                  if (value === null || value === undefined) return "rgba(128, 140, 160, 0.12)";
+                  if (value < 40) return "var(--danger)";
+                  if (value < 70) return "var(--warn)";
+                  return "var(--success)";
+                }}
+                emptyColor="rgba(128, 140, 160, 0.14)"
                 enableLabels={false}
-
-                
-                // ✅ IMPROVED TOOLTIP
                 tooltip={({ cell }: any) => {
                   const meta = cell?.data?.meta as TopicStat | null;
                   if (!meta) return null;
-
                   return (
-                    <div
-                      style={{
-                        background: "rgba(20, 25, 45, 0.95)",
-                        border: "1px solid rgba(255,255,255,0.08)",
-                        borderRadius: 10,
-                        padding: "10px 12px",
-                        minWidth: 200,
-                        boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
-                        backdropFilter: "blur(8px)",
-                      }}
-                    >
-                      <div style={{ fontWeight: 700 }}>
-                        {meta.topicName}
+                    <div className="card" style={{ padding: "0.75rem 0.9rem", minWidth: 220 }}>
+                      <div style={{ fontWeight: 800 }}>{meta.topicName}</div>
+                      <div style={{ color: "var(--muted)", fontSize: "0.9rem", marginTop: 4 }}>
+                        Accuracy: <strong style={{ color: "var(--text)" }}>{Math.round(meta.accuracyPct)}%</strong>
                       </div>
-
-                      <div style={{ fontSize: "0.85rem", marginTop: 6 }}>
-                        🎯 Accuracy: <strong>{Math.round(meta.accuracyPct)}%</strong>
+                      <div style={{ color: "var(--muted)", fontSize: "0.9rem" }}>
+                        Attempts: <strong style={{ color: "var(--text)" }}>{meta.attempts}</strong>
                       </div>
-
-                      <div style={{ fontSize: "0.85rem" }}>
-                        🔁 Attempts: <strong>{meta.attempts}</strong>
+                      <div style={{ color: "var(--muted)", fontSize: "0.9rem" }}>
+                        Mastery: <strong style={{ color: "var(--text)" }}>{meta.masteryLevel}</strong>
                       </div>
-
-                      <div style={{ fontSize: "0.85rem" }}>
-                        📊 Mastery: <strong>{meta.masteryLevel}</strong>
-                      </div>
-              emptyColor="rgba(128, 140, 160, 0.14)"
-              enableLabels={false}
-              tooltip={({ cell }: any) => {
-                const meta = cell?.data?.meta as TopicStat | null;
-                if (!meta) return null;
-                return (
-                  <div className="card" style={{ padding: "0.75rem 0.9rem", minWidth: 220 }}>
-                    <div style={{ fontWeight: 800 }}>{meta.topicName}</div>
-                    <div style={{ color: "var(--muted)", fontSize: "0.9rem", marginTop: 4 }}>
-                      Accuracy: <strong style={{ color: "var(--text)" }}>{Math.round(meta.accuracyPct)}%</strong>
-                    </div>
-                    <div style={{ color: "var(--muted)", fontSize: "0.9rem" }}>
-                      Attempts: <strong style={{ color: "var(--text)" }}>{meta.attempts}</strong>
-                    </div>
-                    <div style={{ color: "var(--muted)", fontSize: "0.9rem" }}>
-                      Mastery: <strong style={{ color: "var(--text)" }}>{meta.masteryLevel}</strong>
                     </div>
                   );
                 }}
               />
             </div>
 
-            {/* ✅ LEGEND (VERY IMPORTANT UX) */}
-            <div style={{ display: "flex", gap: 16, marginTop: 12 }}>
-              <span style={{ color: "#ef4444" }}>● Weak</span>
-              <span style={{ color: "#f59e0b" }}>● Medium</span>
-              <span style={{ color: "#22c55e" }}>● Strong</span>
+            <div className="row" style={{ marginTop: 12, gap: "1rem", flexWrap: "wrap" }}>
+              <span style={{ color: "var(--danger)", fontWeight: 600 }}>● Weak</span>
+              <span style={{ color: "var(--warn)", fontWeight: 600 }}>● Medium</span>
+              <span style={{ color: "var(--success)", fontWeight: 600 }}>● Strong</span>
             </div>
 
-            {/* ✅ RANGE TABLE */}
-<div
-  style={{
-    marginTop: 20,
-    border: "1px solid rgba(255,255,255,0.08)",
-    borderRadius: 10,
-    overflow: "hidden",
-  }}
->
-  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.9rem" }}>
-    <thead style={{ background: "rgba(255,255,255,0.04)" }}>
-      <tr>
-        <th style={{ padding: "10px", textAlign: "left" }}>Range</th>
-        <th style={{ padding: "10px", textAlign: "left" }}>Level</th>
-        <th style={{ padding: "10px", textAlign: "left" }}>Meaning</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td style={{ padding: "10px" }}>0–39%</td>
-        <td style={{ color: "#ef4444", padding: "10px" }}>Weak</td>
-        <td style={{ padding: "10px" }}>Needs improvement</td>
-      </tr>
-      <tr>
-        <td style={{ padding: "10px" }}>40–69%</td>
-        <td style={{ color: "#f59e0b", padding: "10px" }}>Medium</td>
-        <td style={{ padding: "10px" }}>Moderate understanding</td>
-      </tr>
-      <tr>
-        <td style={{ padding: "10px" }}>70–100%</td>
-        <td style={{ color: "#22c55e", padding: "10px" }}>Strong</td>
-        <td style={{ padding: "10px" }}>Good mastery</td>
-      </tr>
-    </tbody>
-  </table>
-</div>
-
-
+            <div
+              className="card-inset"
+              style={{ marginTop: 16, padding: 0, overflow: "hidden" }}
+            >
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem" }}>
+                <thead style={{ background: "var(--surface-2)" }}>
+                  <tr>
+                    <th style={{ padding: "0.65rem 1rem", textAlign: "left" }}>Range</th>
+                    <th style={{ padding: "0.65rem 1rem", textAlign: "left" }}>Level</th>
+                    <th style={{ padding: "0.65rem 1rem", textAlign: "left" }}>Meaning</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style={{ padding: "0.65rem 1rem" }}>0–39%</td>
+                    <td style={{ color: "var(--danger)", padding: "0.65rem 1rem", fontWeight: 700 }}>Weak</td>
+                    <td style={{ padding: "0.65rem 1rem", color: "var(--muted)" }}>Needs more practice</td>
+                  </tr>
+                  <tr>
+                    <td style={{ padding: "0.65rem 1rem" }}>40–69%</td>
+                    <td style={{ color: "var(--warn)", padding: "0.65rem 1rem", fontWeight: 700 }}>Medium</td>
+                    <td style={{ padding: "0.65rem 1rem", color: "var(--muted)" }}>Moderate understanding</td>
+                  </tr>
+                  <tr>
+                    <td style={{ padding: "0.65rem 1rem" }}>70–100%</td>
+                    <td style={{ color: "var(--success)", padding: "0.65rem 1rem", fontWeight: 700 }}>Strong</td>
+                    <td style={{ padding: "0.65rem 1rem", color: "var(--muted)" }}>Solid mastery</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </>
         )}
       </div>

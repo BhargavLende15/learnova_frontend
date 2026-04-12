@@ -56,17 +56,17 @@ export const api = {
     ),
 
   saveGoalSkills: (data: {
-  userId: string;
-  career_goal: string;
-  selected_skills: string[];
-}) =>
-  unwrap<any>(
-    http.post("/user/goal-skills", {
-      user_id: data.userId, // ✅ FIX
-      career_goal: data.career_goal,
-      selected_skills: data.selected_skills,
-    })
-  ),
+    userId: string;
+    career_goal: string;
+    selected_skills: string[];
+  }) =>
+    unwrap<any>(
+      http.post("/user/goal-skills", {
+        user_id: data.userId,
+        career_goal: data.career_goal,
+        selected_skills: data.selected_skills,
+      })
+    ),
 
   getGoalSkills: (userId: string) =>
     unwrap<any>(
@@ -181,13 +181,18 @@ export const api = {
       )
     ),
 
-  dailyLogin: (userId: string) => unwrap<AnyApi>(http.post("/api/daily-login", { userId })),
-  completeTopic: (userId: string, topicId: string) => unwrap<AnyApi>(http.post("/api/complete-topic", { userId, topicId })),
-  profile: (userId: string) => unwrap<AnyApi>(http.get(`/api/profile/${encodeURIComponent(userId)}`)),
+  dailyLogin: (userId: string) => 
+    unwrap<any>(http.post("/api/daily-login", { userId })),
+
+  profile: (userId: string) => 
+    unwrap<any>(http.get(`/api/profile/${encodeURIComponent(userId)}`)),
 
   mentorChat: (userId: string, message: string) =>
-    unwrap<AnyApi>(http.post("/mentor/chat", { user_id: userId, message })),
+    unwrap<any>(http.post("/mentor/chat", { user_id: userId, message })),
+
+  getDirectResources: (topic: string) =>
+    unwrap<any>(http.get(`/api/resources?topic=${encodeURIComponent(topic)}`)),
 
   generateResourcePack: (topic_name: string) =>
-    unwrap<AnyApi>(http.post("/generate-resources", { topic_name })),
+    unwrap<any>(http.post("/generate-resources", { topic_name })),
 };
