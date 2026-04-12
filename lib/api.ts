@@ -82,22 +82,17 @@ export const api = {
       })
     ),
 
-  assessmentAnswer: (
+  assessmentSubmitAll: (
+    userId: string,
     sessionId: string,
-    questionId: string,
-    selectedOption: string
+    answers: Record<string, string>
   ) =>
     unwrap<AssessmentResponse>(
-      http.post("/assessment/answer", {
+      http.post("/assessment/submit-all", {
+        user_id: userId,
         session_id: sessionId,
-        question_id: questionId,
-        selected_option: selectedOption,
+        answers,
       })
-    ),
-
-  assessmentFinalize: (sessionId: string) =>
-    unwrap<AssessmentResponse>(
-      http.post("/assessment/finalize", { session_id: sessionId })
     ),
 
   latestResult: (userId: string) =>
