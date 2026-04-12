@@ -16,22 +16,33 @@ export default function DashboardPage() {
   const [saving, setSaving] = useState(false);
   const [userId, setUserId] = useState("");
 
+  // ✅ LOAD USER + DATA
   useEffect(() => {
-    const uid = localStorage.getItem("learnova_user_id");
+    const uid =
+      typeof window !== "undefined"
+        ? localStorage.getItem("learnova_user_id")
+        : null;
+
     if (!uid) {
       router.replace("/");
       return;
     }
+
     setUserId(uid);
+
     (async () => {
       try {
         const g = await api.goals();
         setGoals(g.goals || []);
+
         const prefs = await api.getGoalSkills(uid);
-        if (prefs.career_goal) {
+
+        if (prefs?.career_goal) {
           setGoal(prefs.career_goal);
+
           const sk = await api.skills(prefs.career_goal);
           setSkills(sk.skills || []);
+
           setSelected(new Set(prefs.selected_skills || []));
         }
       } catch {
@@ -42,11 +53,13 @@ export default function DashboardPage() {
     })();
   }, [router]);
 
+  // ✅ LOAD SKILLS ON GOAL CHANGE
   useEffect(() => {
     if (!goal) {
       setSkills([]);
       return;
     }
+
     (async () => {
       try {
         const sk = await api.skills(goal);
@@ -67,20 +80,27 @@ export default function DashboardPage() {
     });
   }
 
+  // ✅ FIXED SAVE FUNCTION (IMPORTANT)
   async function save() {
     if (!userId || !goal || selected.size === 0) {
       setError("Choose a career goal and at least one skill to continue.");
       return;
     }
+
     setSaving(true);
     setError("");
+
     try {
       await api.saveGoalSkills({
-        user_id: userId,
+        userId: userId, // ✅ frontend key
         career_goal: goal,
         selected_skills: Array.from(selected),
       });
-      router.push("/assessment");
+
+      // ✅ optional UI update trigger
+      window.dispatchEvent(new Event("learnova:profile-updated"));
+
+      router.push("/assessment"); // ⚠️ ensure route exists
     } catch (e) {
       setError(e instanceof Error ? e.message : "Save failed");
     } finally {
@@ -100,6 +120,8 @@ export default function DashboardPage() {
 
   return (
     <div className="container stack">
+      <header className="row" style={{ justifyContent: "space-between" }}>
+        <h1 style={{ margin: 0 }}>Goal & skills</h1>
       <header className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
         <h1 className="pageTitle">Your learning profile</h1>
         <Link href="/" className="btn btn-ghost">
@@ -113,6 +135,7 @@ export default function DashboardPage() {
           questions and your multi-phase roadmap — pick honestly so difficulty and pacing match you.
         </p>
 
+        {/* GOAL SELECT */}
         <div>
           <label className="label">Career goal</label>
           <select className="input" value={goal} onChange={(e) => setGoal(e.target.value)}>
@@ -125,12 +148,17 @@ export default function DashboardPage() {
           </select>
         </div>
 
+        {/* SKILLS */}
         {goal && (
           <div>
             <label className="label">Skills to assess</label>
             <div className="stack" style={{ gap: "0.4rem" }}>
               {skills.map((s) => (
-                <label key={s} className="row" style={{ cursor: "pointer" }}>
+                <label
+                  key={s}
+                  className="row"
+                  style={{ cursor: "pointer" }}
+                >
                   <input
                     type="checkbox"
                     checked={selected.has(s)}
@@ -143,12 +171,15 @@ export default function DashboardPage() {
           </div>
         )}
 
+        {/* ERROR */}
         {error && <p className="error">{error}</p>}
 
+        {/* ACTIONS */}
         <div className="row">
           <button className="btn" type="button" onClick={save} disabled={saving}>
             {saving ? "Saving…" : "Save & go to assessment"}
           </button>
+
           <Link href="/roadmap" className="btn btn-ghost">
             View roadmap
           </Link>

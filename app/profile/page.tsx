@@ -52,14 +52,31 @@ export default function ProfilePage() {
   }, [router]);
 
   const progress = useMemo(() => {
-    const total = p?.totalTopics ?? 0;
-    const done = (p?.completedTopics ?? []).length;
-    const pct = total > 0 ? clamp((done / total) * 100, 0, 100) : 0;
-    return { total, done, pct };
-  }, [p]);
+  const total = p?.totalTopics ?? 0;
+  const doneRaw = (p?.completedTopics ?? []).length;
+
+  // ✅ FIX: prevent overflow
+  const done = Math.min(doneRaw, total);
+
+  const pct = total > 0 ? clamp((done / total) * 100, 0, 100) : 0;
+
+  return { total, done, pct };
+}, [p]);
 
   return (
     <div className="container stack">
+      <header className="row" style={{ justifyContent: "space-between" }}>
+        <h1 style={{ fontSize: "1.8rem", fontWeight: 700, letterSpacing: "-0.02em" }}>
+  Profile Overview
+</h1>
+        <div className="row">
+          <Link href="/roadmap" className="btn btn-ghost">
+            Roadmap
+          </Link>
+          <Link href="/profile" className="btn btn-ghost">
+            Dashboard
+          </Link>
+        </div>
       <header className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
         <h1 className="pageTitle">Your profile</h1>
         <Link href="/dashboard" className="btn btn-ghost">
@@ -99,7 +116,8 @@ export default function ProfilePage() {
             </div>
           </motion.div>
 
-          <motion.div className="card stack" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+          <motion.div className="card stack" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ padding: "1.5rem", gap: "0.75rem" }}>
+            
             <div className="row" style={{ justifyContent: "space-between" }}>
               <div>
                 <div style={{ color: "var(--muted)", fontSize: "0.85rem" }}>Login streak</div>
@@ -116,9 +134,23 @@ export default function ProfilePage() {
                 {progress.done} / {progress.total} topics completed
               </span>
             </div>
-            <div className="barTrack" style={{ height: 14 }}>
-              <div className="barFill" style={{ width: `${progress.pct}%` }} />
-            </div>
+            <div className="barTrack" style={{ height: 16, position: "relative" }}>
+  <div
+    className="barFill"
+    style={{
+      width: `${progress.pct}%`,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "flex-end",
+      paddingRight: 8,
+      fontSize: "0.75rem",
+      fontWeight: 600,
+      color: "#fff",
+    }}
+  >
+    {Math.round(progress.pct)}%
+  </div>
+</div>
           </motion.div>
 
           <motion.div className="card stack" style={{ gridColumn: "1 / -1" }} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
@@ -129,8 +161,24 @@ export default function ProfilePage() {
               <div className="stack" style={{ gap: "0.5rem" }}>
                 {p.recentCompletedTopics.map((id) => (
                   <div key={id} className="row" style={{ justifyContent: "space-between" }}>
-                    <span style={{ fontWeight: 900 }}>{id}</span>
-                    <span className="badge">Completed</span>
+                    <span style={{ fontWeight: 500 }}>
+                      {id
+                        .replaceAll("_", " ")
+                        .replace(/\b\w/g, (c) => c.toUpperCase())}
+                    </span>
+                   <span
+  className="badge"
+  style={{
+    background: "rgba(34,197,94,0.15)",
+    color: "#22c55e",
+    border: "1px solid rgba(34,197,94,0.3)",
+    fontWeight: 600,
+    padding: "4px 10px",
+    borderRadius: 999,
+  }}
+>
+  ✓ Completed
+</span>
                   </div>
                 ))}
               </div>
