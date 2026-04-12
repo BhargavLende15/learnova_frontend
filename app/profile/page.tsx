@@ -77,6 +77,11 @@ export default function ProfilePage() {
             Dashboard
           </Link>
         </div>
+      <header className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
+        <h1 className="pageTitle">Profile</h1>
+        <Link href="/dashboard" className="btn btn-ghost">
+          Dashboard
+        </Link>
       </header>
 
       {loading && <p style={{ color: "var(--muted)", margin: 0 }}>Loading…</p>}

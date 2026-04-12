@@ -67,16 +67,11 @@ export default function SkillMapPage() {
 
   return (
     <div className="container stack">
-      <header className="row" style={{ justifyContent: "space-between" }}>
-        <h1 style={{ margin: 0 }}>Skill map</h1>
-        <div className="row">
-          <Link href="/roadmap" className="btn btn-ghost">
-            Roadmap
-          </Link>
-          <Link href="/results" className="btn btn-ghost">
-            Results
-          </Link>
-        </div>
+      <header className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
+        <h1 className="pageTitle">Skill map</h1>
+        <Link href="/results" className="btn btn-ghost">
+          Results
+        </Link>
       </header>
 
       <div className="card stack">
@@ -150,6 +145,22 @@ export default function SkillMapPage() {
                       <div style={{ fontSize: "0.85rem" }}>
                         📊 Mastery: <strong>{meta.masteryLevel}</strong>
                       </div>
+              emptyColor="rgba(128, 140, 160, 0.14)"
+              enableLabels={false}
+              tooltip={({ cell }: any) => {
+                const meta = cell?.data?.meta as TopicStat | null;
+                if (!meta) return null;
+                return (
+                  <div className="card" style={{ padding: "0.75rem 0.9rem", minWidth: 220 }}>
+                    <div style={{ fontWeight: 800 }}>{meta.topicName}</div>
+                    <div style={{ color: "var(--muted)", fontSize: "0.9rem", marginTop: 4 }}>
+                      Accuracy: <strong style={{ color: "var(--text)" }}>{Math.round(meta.accuracyPct)}%</strong>
+                    </div>
+                    <div style={{ color: "var(--muted)", fontSize: "0.9rem" }}>
+                      Attempts: <strong style={{ color: "var(--text)" }}>{meta.attempts}</strong>
+                    </div>
+                    <div style={{ color: "var(--muted)", fontSize: "0.9rem" }}>
+                      Mastery: <strong style={{ color: "var(--text)" }}>{meta.masteryLevel}</strong>
                     </div>
                   );
                 }}

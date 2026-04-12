@@ -52,13 +52,17 @@ export default function HomePage() {
   }
 
   return (
-    <div className="container stack">
-      <header className="row" style={{ justifyContent: "space-between" }}>
-        <h1 style={{ margin: 0, fontSize: "1.5rem" }}>Learnova</h1>
-        <span style={{ color: "var(--muted)" }}>Adaptive learning</span>
+    <div className="container stack" style={{ paddingTop: "1rem", paddingBottom: "2rem" }}>
+      <header className="row" style={{ justifyContent: "space-between", alignItems: "baseline" }}>
+        <div>
+          <h1 className="pageTitle" style={{ fontSize: "1.85rem" }}>
+            Learnova
+          </h1>
+          <p style={{ margin: "0.35rem 0 0", color: "var(--muted)", fontWeight: 600 }}>Adaptive learning</p>
+        </div>
       </header>
 
-      <div className="card stack" style={{ maxWidth: 420 }}>
+      <div className="card stack" style={{ maxWidth: 440 }}>
         <div className="row">
           <button
             type="button"

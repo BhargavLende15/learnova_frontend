@@ -3,8 +3,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Filter, RefreshCw, Search } from "lucide-react";
 import { api } from "@/lib/api";
 import { PracticeSessionPanel } from "@/components/PracticeSessionPanel";
+import { RoadmapProgressPanel } from "@/components/RoadmapProgressPanel";
 import toast from "react-hot-toast";
 
 type Phase = {
@@ -18,9 +20,15 @@ type Phase = {
 export default function RoadmapPage() {
   const router = useRouter();
   const [userId, setUserId] = useState("");
-  const [roadmap, setRoadmap] = useState<{ career_goal?: string; phases?: Phase[]; progress?: { completed_ids?: string[]; notes?: string[] } } | null>(null);
+  const [roadmap, setRoadmap] = useState<{
+    career_goal?: string;
+    phases?: Phase[];
+    progress?: { completed_ids?: string[]; notes?: string[] };
+  } | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [filterQ, setFilterQ] = useState("");
+  const [hideCompleted, setHideCompleted] = useState(false);
 
   const load = useCallback(async () => {
     if (!userId) return;
@@ -96,7 +104,6 @@ export default function RoadmapPage() {
     const p: any = (roadmap as any)?.progress || {};
     const ids: string[] = p.unlocked_topic_ids || [];
     if (ids.length) return new Set(ids);
-    // Fallback client-side unlock: first incomplete topic is unlocked.
     const ordered: string[] = [];
     for (const ph of roadmap?.phases || []) for (const t of ph.topics || []) ordered.push(t.id);
     const u = new Set<string>(completed);
@@ -117,6 +124,14 @@ export default function RoadmapPage() {
     return out;
   }, [roadmap]);
 
+  const filteredTopics = useMemo(() => {
+    let list = allTopics;
+    const q = filterQ.trim().toLowerCase();
+    if (q) list = list.filter((t) => t.title.toLowerCase().includes(q));
+    if (hideCompleted) list = list.filter((t) => !completed.has(t.id));
+    return list;
+  }, [allTopics, filterQ, hideCompleted, completed]);
+
   return (
     <div className="container stack">
       <header className="row" style={{ justifyContent: "space-between" }}>
@@ -132,14 +147,34 @@ export default function RoadmapPage() {
             Skill map
           </Link>
         </div>
+      <header className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
+        <h1 className="pageTitle">Learning roadmap</h1>
+        <Link href="/assessment" className="btn btn-ghost">
+          Assessment
+        </Link>
       </header>
 
-      <div className="row">
-        <button className="btn" type="button" onClick={generate} disabled={loading}>
-          {loading ? "…" : "Generate / refresh roadmap"}
+      <div className="row" style={{ alignItems: "stretch", gap: "0.75rem" }}>
+        <div className="searchBarNeo" style={{ flex: 1, minWidth: 0 }}>
+          <Search size={18} color="var(--muted)" aria-hidden />
+          <input type="search" placeholder="Search topics in your roadmap…" value={filterQ} onChange={(e) => setFilterQ(e.target.value)} aria-label="Search topics" />
+        </div>
+        <button className="btn btn-ghost" type="button" onClick={load} disabled={loading} title="Reload roadmap">
+          <RefreshCw size={18} />
         </button>
-        <button className="btn btn-ghost" type="button" onClick={load} disabled={loading}>
-          Reload
+        <button className="btn" type="button" onClick={generate} disabled={loading}>
+          {loading ? "…" : "Refresh roadmap"}
+        </button>
+        <button
+          type="button"
+          className="btn btn-ghost"
+          aria-pressed={hideCompleted}
+          aria-label="Hide completed topics"
+          title={hideCompleted ? "Show all topics" : "Hide completed"}
+          onClick={() => setHideCompleted((v) => !v)}
+          style={hideCompleted ? { boxShadow: "var(--shadow-in-1), var(--shadow-in-2)" } : undefined}
+        >
+          <Filter size={18} />
         </button>
       </div>
 
@@ -147,12 +182,15 @@ export default function RoadmapPage() {
 
       {roadmap && (
         <div className="stack">
-          <p style={{ margin: 0, color: "var(--muted)" }}>
-            Goal: <strong>{roadmap.career_goal}</strong>
-          </p>
+          <RoadmapProgressPanel
+            careerGoal={roadmap.career_goal}
+            phases={roadmap.phases || []}
+            topicsTotal={allTopics.length}
+            topicsCompleted={allTopics.filter((t) => completed.has(t.id)).length}
+          />
           {(roadmap.progress?.notes?.length ?? 0) > 0 && (
-            <div className="card" style={{ borderColor: "var(--warn)" }}>
-              <strong>Progress agent</strong>
+            <div className="card stack" style={{ borderLeft: "4px solid var(--warn)" }}>
+              <strong>Progress notes</strong>
               <ul style={{ margin: "0.5rem 0 0", paddingLeft: "1.25rem" }}>
                 {roadmap.progress!.notes!.slice(-5).map((n, i) => (
                   <li key={i}>{n}</li>
@@ -162,26 +200,19 @@ export default function RoadmapPage() {
           )}
 
           <div className="card stack">
-            <h2 style={{ margin: 0, fontSize: "1.1rem" }}>Timeline</h2>
+            <h2 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 800 }}>Timeline</h2>
             <div className="row" style={{ alignItems: "stretch" }}>
               {(roadmap.phases || []).map((ph) => (
-                <div
-                  key={ph.name}
-                  className="card"
-                  style={{ flex: "1 1 200px", minWidth: 180, padding: "1rem" }}
-                >
+                <div key={ph.name} className="card" style={{ flex: "1 1 200px", minWidth: 180, padding: "1rem 1.15rem" }}>
                   <strong>{ph.name}</strong>
-                  <div style={{ color: "var(--muted)", fontSize: "0.85rem" }}>
-                    ~{ph.timeline_weeks} wk
-                  </div>
+                  <div style={{ color: "var(--muted)", fontSize: "0.85rem", marginTop: 6 }}>~{ph.timeline_weeks} weeks</div>
                 </div>
               ))}
             </div>
           </div>
 
           <PracticeSessionPanel
-            userId={userId}
-            topics={allTopics}
+            topics={filteredTopics}
             completedIds={completed}
             unlockedTopicIds={unlocked}
            onMarkDone={async (topicId: string) =>
