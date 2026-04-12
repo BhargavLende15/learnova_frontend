@@ -3,13 +3,16 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Flame, HomeIcon, LogOut, User } from "lucide-react";
-import { Toaster } from "react-hot-toast";
-
-import { api } from "@/lib/api";
-import RoadmapPage from "@/app/roadmap/page";
-import ResultsPage from "@/app/results/page";
-import { Award, Flame, Layers, LayoutDashboard, ListChecks, LogOut, Map, User } from "lucide-react";
+import { 
+  Award, 
+  Flame, 
+  Layers, 
+  LayoutDashboard, 
+  ListChecks, 
+  LogOut, 
+  Map, 
+  User 
+} from "lucide-react";
 import { Toaster } from "react-hot-toast";
 
 import { api } from "@/lib/api";
@@ -48,30 +51,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [profile, setProfile] = useState<Profile | null>(null);
 
-  // ✅ AUTH + PROFILE LOAD (FIXED TOKEN HANDLING)
- useEffect(() => {
-  const uid = localStorage.getItem("learnova_user_id");
-  const token = localStorage.getItem("learnova_token");
-
-  if (!uid) {
-    setProfile(null);
-    return;
-  }
-
-  (async () => {
-    try {
-      if (token) await api.me();
-
-      const p = await api.profile(uid);
-
-      setProfile({
-        userId: uid,
-        name: p.name,
-        email: p.email,
-        points: p.points ?? 0,
-        streak: p.streak ?? 0,
-      });
-    } catch {
+  // Initialize theme
   useEffect(() => {
     try {
       const t = localStorage.getItem("learnova_theme");
@@ -81,19 +61,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  // Auth + Profile Load
   useEffect(() => {
     const uid = typeof window !== "undefined" ? localStorage.getItem("learnova_user_id") : null;
-    const token =
-      typeof window !== "undefined"
-        ? localStorage.getItem("token") || localStorage.getItem("learnova_token")
-        : null;
+    const token = typeof window !== "undefined" 
+      ? (localStorage.getItem("token") || localStorage.getItem("learnova_token")) 
+      : null;
+
     if (!uid) {
       setProfile(null);
-      localStorage.clear();
-      router.replace("/");
+      if (pathname !== "/") {
+        localStorage.clear();
+        router.replace("/");
+      }
+      return;
     }
-  })();
-}, [pathname]); // ✅ NEVER CHANGE THIS AGAIN
+
     (async () => {
       try {
         if (token) {
@@ -119,37 +102,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     })();
   }, [pathname, router]);
 
-  // ✅ REAL-TIME PROFILE UPDATE LISTENER
+  // Real-time Profile Update Listener
   useEffect(() => {
     function onUpdate() {
-      const uid =
-        typeof window !== "undefined"
-          ? localStorage.getItem("learnova_user_id")
-          : null;
-
+      const uid = typeof window !== "undefined" ? localStorage.getItem("learnova_user_id") : null;
       if (!uid) return;
 
-      api
-        .profile(uid)
-        .then((p) =>
+      api.profile(uid)
+        .then((p) => {
           setProfile({
             userId: uid,
             name: p.name,
             email: p.email,
             points: p.points ?? 0,
             streak: p.streak ?? 0,
-          })
-        )
+          });
+        })
         .catch(() => {});
     }
 
-    window.addEventListener("learnova:profile-updated", onUpdate as any);
-
-    return () =>
-      window.removeEventListener(
-        "learnova:profile-updated",
-        onUpdate as any
-      );
     window.addEventListener("learnova:profile-updated", onUpdate as EventListener);
     return () => window.removeEventListener("learnova:profile-updated", onUpdate as EventListener);
   }, []);
@@ -165,19 +136,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return "LN";
   }, [profile?.name]);
 
-  // ✅ CLEAN LOGOUT
   function logout() {
+    localStorage.removeItem("token");
     localStorage.removeItem("learnova_token");
     localStorage.removeItem("learnova_user_id");
     localStorage.removeItem("learnova_name");
-
     setProfile(null);
     router.push("/");
   }
 
   return (
     <>
-      {/* ✅ TOASTER */}
       <Toaster
         position="top-right"
         toastOptions={{
@@ -191,55 +160,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         }}
       />
 
-      {/* ✅ NAVBAR */}
-      {showNav && (
-        <div className="navBar">
-          <div className="navInner">
-            {/* Brand */}
-            <button
-              type="button"
-              className="navBrand"
-              style={{ cursor: "pointer", letterSpacing: "0.5px" }}
-              onClick={() => router.push("/dashboard")}
-            >
-              Learnova
-            </button>
-
-            {/* Navigation Links */}
-            <div className="flexRow" style={{ gap: 10 }}>
-               <Link href="/dashboard" className="navLink">
-               <HomeIcon size={16} />  Home
-              </Link>
-              <Link href="/roadmap" className="navLink">
-                 Roadmap
-              </Link>
-              <Link href="/results" className="navLink">
-              Results
-              </Link>
-              <Link href="/skill-map" className="navLink">
-                Skill map
-              </Link>
-              <Link href="/profile" className="navLink">
-                <User size={16} /> Profile
-              </Link>
-            </div>
-
-            {/* User Stats */}
-            <div className="flexRow" style={{ gap: 10 }}>
-              <span className="pill">
-                <Flame size={16} /> {profile?.streak ?? 0}
-              </span>
-
-              <span className="pill">
-                {profile ? `${profile.points} pts` : "— pts"}
-              </span>
-
-              <button
-                type="button"
-                className="navLink"
-                onClick={logout}
-              >
-                <LogOut size={16} /> Logout
       {showAppChrome ? (
         <div className="appRoot">
           <div className="appBody">
@@ -311,14 +231,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div style={{ flex: 1, overflow: "auto" }}>{children}</div>
         </div>
       )}
-
-      {/* PAGE CONTENT */}
-      <div style={{ paddingTop: showNav ? 72 : 0 }}>
-        {children}
-      </div>
-    </>
-  );
-}
     </>
   );
 }

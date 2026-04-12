@@ -23,18 +23,26 @@ export default function HomePage() {
       let uid = "";
       if (mode === "register") {
         const r = await api.register({ name, email, password });
-        localStorage.setItem("token", r.token);
-        localStorage.setItem("learnova_token", r.token);
-        localStorage.setItem("learnova_user_id", r.user.id);
-        localStorage.setItem("learnova_name", r.user.name);
-        uid = r.user.id;
+        const token = r.token;
+        const id = r.user?.id;
+        const displayName = r.user?.name ?? name;
+        if (!token || !id) throw new Error("Invalid server response");
+        localStorage.setItem("token", token);
+        localStorage.setItem("learnova_token", token);
+        localStorage.setItem("learnova_user_id", id);
+        localStorage.setItem("learnova_name", displayName);
+        uid = id;
       } else {
         const r = await api.login(email, password);
-        localStorage.setItem("token", r.token);
-        localStorage.setItem("learnova_token", r.token);
-        localStorage.setItem("learnova_user_id", r.user.id);
-        localStorage.setItem("learnova_name", r.user.name);
-        uid = r.user.id;
+        const token = r.token;
+        const id = r.user?.id;
+        const displayName = r.user?.name ?? "";
+        if (!token || !id) throw new Error("Invalid server response");
+        localStorage.setItem("token", token);
+        localStorage.setItem("learnova_token", token);
+        localStorage.setItem("learnova_user_id", id);
+        if (displayName) localStorage.setItem("learnova_name", displayName);
+        uid = id;
       }
       if (uid) {
         try {

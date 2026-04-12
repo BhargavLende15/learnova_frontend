@@ -150,10 +150,10 @@ export default function RoadmapPage() {
 
   return (
     <div className="container stack">
-      <header className="row" style={{ justifyContent: "space-between" }}>
-        <h1 style={{ margin: 0 }}>Learning roadmap</h1>
-        <div className="row">
-          <Link href="/profile" className="btn btn-ghost">
+      <header className="row" style={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.75rem" }}>
+        <h1 className="pageTitle">Your learning roadmap</h1>
+        <div className="row" style={{ gap: "0.5rem" }}>
+          <Link href="/dashboard" className="btn btn-ghost">
             Dashboard
           </Link>
           <Link href="/assessment" className="btn btn-ghost">
@@ -163,11 +163,6 @@ export default function RoadmapPage() {
             Skill map
           </Link>
         </div>
-      <header className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
-        <h1 className="pageTitle">Your learning roadmap</h1>
-        <Link href="/assessment" className="btn btn-ghost">
-          Assessment
-        </Link>
       </header>
 
       <div className="row" style={{ alignItems: "stretch", gap: "0.75rem" }}>
@@ -292,9 +287,7 @@ export default function RoadmapPage() {
             topics={filteredTopics}
             completedIds={completed}
             unlockedTopicIds={unlocked}
-           onMarkDone={async (topicId: string) =>
-            completeItem(topicId, "topic")
-}
+            onMarkDone={async (topicId) => completeItem(topicId, "topic")}
           />
         </div>
       )}

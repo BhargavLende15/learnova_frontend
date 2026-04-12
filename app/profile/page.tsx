@@ -52,36 +52,25 @@ export default function ProfilePage() {
   }, [router]);
 
   const progress = useMemo(() => {
-  const total = p?.totalTopics ?? 0;
-  const doneRaw = (p?.completedTopics ?? []).length;
-
-  // ✅ FIX: prevent overflow
-  const done = Math.min(doneRaw, total);
-
-  const pct = total > 0 ? clamp((done / total) * 100, 0, 100) : 0;
-
-  return { total, done, pct };
-}, [p]);
+    const total = p?.totalTopics ?? 0;
+    const doneRaw = (p?.completedTopics ?? []).length;
+    const done = Math.min(doneRaw, total);
+    const pct = total > 0 ? clamp((done / total) * 100, 0, 100) : 0;
+    return { total, done, pct };
+  }, [p]);
 
   return (
     <div className="container stack">
-      <header className="row" style={{ justifyContent: "space-between" }}>
-        <h1 style={{ fontSize: "1.8rem", fontWeight: 700, letterSpacing: "-0.02em" }}>
-  Profile Overview
-</h1>
-        <div className="row">
+      <header className="row" style={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.75rem" }}>
+        <h1 className="pageTitle">Your profile</h1>
+        <div className="row" style={{ gap: "0.5rem" }}>
+          <Link href="/dashboard" className="btn btn-ghost">
+            Dashboard
+          </Link>
           <Link href="/roadmap" className="btn btn-ghost">
             Roadmap
           </Link>
-          <Link href="/profile" className="btn btn-ghost">
-            Dashboard
-          </Link>
         </div>
-      <header className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
-        <h1 className="pageTitle">Your profile</h1>
-        <Link href="/dashboard" className="btn btn-ghost">
-          Dashboard
-        </Link>
       </header>
 
       {loading && (
