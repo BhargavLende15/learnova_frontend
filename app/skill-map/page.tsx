@@ -118,9 +118,6 @@ export default function SkillMapPage() {
                       <div style={{ color: "var(--muted)", fontSize: "0.9rem" }}>
                         Attempts: <strong style={{ color: "var(--text)" }}>{meta.attempts}</strong>
                       </div>
-                      <div style={{ color: "var(--muted)", fontSize: "0.9rem" }}>
-                        Mastery: <strong style={{ color: "var(--text)" }}>{meta.masteryLevel}</strong>
-                      </div>
                     </div>
                   );
                 }}

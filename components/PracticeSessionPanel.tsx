@@ -127,7 +127,7 @@ export function PracticeSessionPanel({ topics, completedIds, unlockedTopicIds, o
                   </div>
                 </div>
 
-                <div className="practiceCell practiceCellStack">
+                <div className="practiceCell practiceCellStack" style={{ display: "flex", alignItems: "center" }}>
                   <button
                     type="button"
                     className="linkPill"
@@ -147,12 +147,12 @@ export function PracticeSessionPanel({ topics, completedIds, unlockedTopicIds, o
                       >
                         <PlayCircle size={18} /> Watch <ExternalLink size={16} />
                       </a>
-                      {topicRes.youtubeDescription && <p className="resourceDesc">{topicRes.youtubeDescription}</p>}
+                      {/* {topicRes.youtubeDescription && <p className="resourceDesc">{topicRes.youtubeDescription}</p>} */}
                     </>
                   ) : (
                     <span className="practiceCellHint">Use “Load resources” for the video link.</span>
                   )}
-                  {readingExtra?.length ? (
+                  {/* {readingExtra?.length ? (
                     <div className="resourceExtraBlock">
                       <div className="resourceExtraLabel">More reading</div>
                       {readingExtra.slice(0, 2).map((item) => (
@@ -164,16 +164,16 @@ export function PracticeSessionPanel({ topics, completedIds, unlockedTopicIds, o
                         </div>
                       ))}
                     </div>
-                  ) : null}
+                  ) : null} */}
                 </div>
 
-                <div className="practiceCell practiceCellStack">
+                <div className="practiceCell practiceCellStack" style={{ display: "flex", alignItems: "center" }}>
                   {topicRes?.gfgLink ? (
                     <>
                       <a href={topicRes.gfgLink} target="_blank" rel="noreferrer" className="btn btn-ghost practiceRowBtn">
                         Practice search <ExternalLink size={16} />
                       </a>
-                      {topicRes.gfgDescription && <p className="resourceDesc">{topicRes.gfgDescription}</p>}
+                      {/* {topicRes.gfgDescription && <p className="resourceDesc">{topicRes.gfgDescription}</p>} */}
                     </>
                   ) : (
                     <span className="practiceCellHint">Use “Load resources” for practice search.</span>
