@@ -38,6 +38,10 @@ export default function RoadmapPage() {
   const [userId, setUserId] = useState("");
   const [roadmap, setRoadmap] = useState<{
     career_goal?: string;
+    generation_source?: string;
+    career_summary?: string;
+    phase_personalization?: Record<string, string>;
+    recommendations?: string[];
     phases?: Phase[];
     progress?: { completed_ids?: string[]; notes?: string[] };
   } | null>(null);
@@ -149,6 +153,17 @@ export default function RoadmapPage() {
     return list;
   }, [allTopics, filterQ, hideCompleted, completed]);
 
+  const aiSourceLabel = useMemo(() => {
+    const src = String((roadmap as any)?.generation_source || "").toLowerCase();
+    if (src === "gemini") return "Generated using Gemini AI";
+    if (src === "ollama") return "Generated using Ollama";
+    return "Generated using hardcoded fallback";
+  }, [roadmap]);
+
+  const careerSummary = useMemo(() => String((roadmap as any)?.career_summary || "").trim(), [roadmap]);
+  const phasePersonalization = useMemo(() => ((roadmap as any)?.phase_personalization || {}) as Record<string, string>, [roadmap]);
+  const recommendations = useMemo(() => (((roadmap as any)?.recommendations || []) as any[]).map((x) => String(x)).filter(Boolean), [roadmap]);
+
   return (
     <div className="container stack">
       <header className="row" style={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.75rem" }}>
@@ -206,6 +221,19 @@ export default function RoadmapPage() {
             topicsTotal={allTopics.length}
             topicsCompleted={allTopics.filter((t) => completed.has(t.id)).length}
           />
+
+          <div className="row" style={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.75rem" }}>
+            <span className="badge">{aiSourceLabel}</span>
+            {roadmap.career_goal ? <span className="pill">{roadmap.career_goal}</span> : null}
+          </div>
+
+          {careerSummary ? (
+            <div className="card stack">
+              <strong>AI career summary</strong>
+              <p style={{ margin: 0, color: "var(--muted)", lineHeight: 1.55 }}>{careerSummary}</p>
+            </div>
+          ) : null}
+
           {(roadmap.progress?.notes?.length ?? 0) > 0 && (
             <div className="card stack" style={{ borderLeft: "4px solid var(--warn)" }}>
               <strong>Progress notes</strong>
@@ -328,6 +356,12 @@ export default function RoadmapPage() {
                         </p>
                       )}
 
+                      {phasePersonalization?.[ph.name] ? (
+                        <p style={{ margin: 0, fontSize: "0.88rem", lineHeight: 1.55 }}>
+                          <strong>AI guidance:</strong> {phasePersonalization[ph.name]}
+                        </p>
+                      ) : null}
+
                       {ph.timeline_rationale && (
                         <p style={{ margin: 0, fontSize: "0.85rem", lineHeight: 1.5 }}>
                           {ph.timeline_rationale}
@@ -387,6 +421,17 @@ export default function RoadmapPage() {
               </>
             )}
           </div>
+
+          {recommendations.length ? (
+            <div className="card stack">
+              <strong>AI recommendations</strong>
+              <ul style={{ margin: "0.35rem 0 0", paddingLeft: "1.25rem" }}>
+                {recommendations.slice(0, 6).map((r, i) => (
+                  <li key={`${i}-${r}`}>{r}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
         </div>
       )}
     </div>
